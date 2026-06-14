@@ -1835,6 +1835,26 @@ function parseDateLoose(s){
   return dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());
 }
 
+function playChime(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // Gentle rising chime: C5 E5 G5 C6, each note fades out softly
+    const notes=[523.25,659.25,783.99,1046.5];
+    notes.forEach((freq,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type="sine";
+      osc.frequency.value=freq;
+      const t=ctx.currentTime+i*0.55;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.35,t+0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+1.3);
+      osc.start(t); osc.stop(t+1.3);
+    });
+  }catch(e){}
+}
+
 function scheduleEventReminders(){
   const now=new Date(), today=todayKey(), dow=now.getDay();
   state.events.forEach(ev=>{
@@ -1850,12 +1870,12 @@ function scheduleEventReminders(){
         sw.active?.postMessage({type:"SET_ALARM",id:ev.id,fireAt:warnTime.getTime(),title:ev.title,emoji:ev.emoji});
       }).catch(()=>{});
       // In-app fallback for when app is open
-      setTimeout(()=>showLumi(`⏰ ${ev.emoji} ${ev.title} starts in 10 minutes!`,"schedule"),diffWarn);
+      setTimeout(()=>{playChime();showLumi(`⏰ ${ev.emoji} ${ev.title} starts in 10 minutes!`,"schedule");},diffWarn);
     }else if(diffNow>0&&diffNow<86400000){
       navigator.serviceWorker?.ready.then(sw=>{
         sw.active?.postMessage({type:"SET_ALARM",id:ev.id+"n",fireAt:evTime.getTime(),title:ev.title+" — starting now!",emoji:ev.emoji});
       }).catch(()=>{});
-      setTimeout(()=>showLumi(`🎯 Time for ${ev.emoji} ${ev.title}! Good luck.`,"schedule"),diffNow);
+      setTimeout(()=>{playChime();showLumi(`🎯 Time for ${ev.emoji} ${ev.title}! Good luck.`,"schedule");},diffNow);
     }
   });
 }
