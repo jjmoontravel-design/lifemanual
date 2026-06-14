@@ -664,6 +664,42 @@
 // ============ STATE ============
 // Set this to your Cloudflare Worker URL after deploying (leave empty to use local replies only)
 const AI_WORKER_URL = "https://throbbing-bush-2964.jjmoontravel.workers.dev";
+const VAPID_PUBLIC_KEY = "BMvjBh3udeYq2FstcB8Ru2njHwrMKmR4OKeYCH94inrO2RvuTWQc29l2iBQJasiBrAVq-BgRzY9IAbm9fWyUaZw";
+
+// ── Push notification helpers ──────────────────────────────────────────────
+function getPushUserId(){
+  let id=localStorage.getItem("lm.pushId");
+  if(!id){id=crypto.randomUUID();localStorage.setItem("lm.pushId",id);}
+  return id;
+}
+function vapidKey(){
+  const b64=(VAPID_PUBLIC_KEY+"===".slice((VAPID_PUBLIC_KEY.length+3)%4||4)).replace(/-/g,"+").replace(/_/g,"/");
+  return Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+}
+async function getPushSubscription(){
+  if(!("serviceWorker" in navigator&&"PushManager" in window))return null;
+  const reg=await navigator.serviceWorker.ready.catch(()=>null);
+  if(!reg)return null;
+  return reg.pushManager.getSubscription();
+}
+async function subscribePush(){
+  if(!("serviceWorker" in navigator&&"PushManager" in window))return null;
+  const reg=await navigator.serviceWorker.ready.catch(()=>null);
+  if(!reg)return null;
+  try{
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidKey()});
+    await fetch(AI_WORKER_URL+"/push/register",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({userId:getPushUserId(),subscription:sub.toJSON()})}).catch(()=>{});
+    await syncEventsToWorker();
+    return sub;
+  }catch(e){return null;}
+}
+async function syncEventsToWorker(){
+  const sub=await getPushSubscription();
+  if(!sub)return;
+  fetch(AI_WORKER_URL+"/push/events",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({userId:getPushUserId(),events:state.events})}).catch(()=>{});
+}
 
 const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character"};
 let state={
@@ -1940,7 +1976,7 @@ function renderSchedule(v){
     document.querySelectorAll("[data-ev-del]").forEach(btn=>{
       btn.onclick=()=>{
         const delId=+btn.dataset.evDel; clearEventAlarm(delId); state.events=state.events.filter(e=>e.id!==delId);
-        saveAll();
+        saveAll(); syncEventsToWorker();
         const lc=$("#ev-list-card"); if(lc)lc.innerHTML=evListHTML();
         wireEvDel();
         toast("Event removed.");
@@ -1985,7 +2021,7 @@ function renderSchedule(v){
       const time=getTimeValue(wheel);
       const repeat=fw.querySelector("#ev-repeat").value;
       state.events.push({id:Date.now(),emoji:selEmoji,title,date:selDate,time,repeat});
-      saveAll(); scheduleEventReminders();
+      saveAll(); scheduleEventReminders(); syncEventsToWorker();
       const lc=$("#ev-list-card"); if(lc){lc.innerHTML=evListHTML(); wireEvDel();}
       // keep the form open so they can add another right away
       const ti=fw.querySelector("#ev-title"); ti.value=""; ti.focus();
@@ -2293,14 +2329,14 @@ function showNotifBanner(){
   document.getElementById("notifYes").onclick=()=>{
     localStorage.setItem("lm.notif.asked","1");
     banner.classList.remove("show");
-    Notification.requestPermission().then(p=>{
+    Notification.requestPermission().then(async p=>{
       if(p==="granted"){
         toast("🔔 Done! I'll remind you every day. 💜");
-        // Show a test notification
+        await subscribePush();
         navigator.serviceWorker&&navigator.serviceWorker.ready.then(sw=>{
           sw.showNotification("✨ Life Manual",{
-            body:`Hey${state.name?" "+state.name:""}! Your daily upload is waiting — come learn something today. 💜`,
-            icon:"icon-192.png", tag:"lm-welcome", requireInteraction:false
+            body:`Hey${state.name?" "+state.name:""}! Your daily upload is waiting. 💜`,
+            icon:"icon-192.png",tag:"lm-welcome",requireInteraction:false
           });
         }).catch(()=>{});
       } else toast("💜 No worries — I'll be here when you need me.");
@@ -2322,6 +2358,7 @@ window.addEventListener("resize",()=>{
 });
 scheduleReminders();
 scheduleEventReminders();
+syncEventsToWorker();
 // Listen for SW messages (e.g. tapping a notification opens a tab)
 navigator.serviceWorker?.addEventListener("message",e=>{
   if(e.data?.type==="OPEN_TAB"){state.tab=e.data.tab||"today";render();window.scrollTo(0,0);}
