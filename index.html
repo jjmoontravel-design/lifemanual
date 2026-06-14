@@ -49,9 +49,9 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{font-size:16px}
   html.fs-lg{font-size:18px} html.fs-xl{font-size:21px}
-  html{background:var(--bg)}
-  body{margin:0;font-family:"Space Grotesk",system-ui,-apple-system,sans-serif;background:transparent;color:var(--ink);padding-bottom:130px;overflow-x:hidden}
-  html{overflow-x:hidden}
+  html{background:var(--bg);overflow-x:hidden;max-width:100vw}
+  body{margin:0;font-family:"Space Grotesk",system-ui,-apple-system,sans-serif;background:transparent;color:var(--ink);padding-bottom:130px;overflow-x:hidden;max-width:100vw;position:relative}
+  *{min-width:0}
 
   /* HEADER */
   header{position:sticky;top:0;z-index:20;background:rgba(5,8,15,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -183,16 +183,16 @@
   .co-scroll{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}
   .co-input-wrap{padding:10px 12px;background:var(--card);border-top:1px solid var(--line);padding-bottom:max(10px,env(safe-area-inset-bottom));flex:none}
 
-  /* ── NOTIFICATION PERMISSION BANNER ── */
-  .notif-banner{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:12px;right:12px;z-index:70;background:var(--card);border:1px solid rgba(99,102,241,.4);border-radius:20px;padding:14px;display:flex;align-items:center;gap:11px;box-shadow:0 8px 32px rgba(0,0,0,.45);transform:translateY(140%);transition:transform .42s cubic-bezier(.32,0,.15,1)}
-  .notif-banner.show{transform:translateY(0)}
-  .notif-banner-face{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;background:#fff;border:2px solid rgba(167,139,250,.5)}
-  .notif-banner-body{flex:1;min-width:0}
-  .notif-banner-title{font-weight:800;font-size:.9rem;color:var(--ink)}
-  .notif-banner-sub{font-size:.76rem;color:var(--muted);margin-top:2px}
-  .notif-banner-btns{display:flex;gap:7px;flex:none}
-  .notif-yes{background:var(--grad);color:#06121f;border:none;border-radius:999px;padding:8px 16px;font-size:.84rem;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
-  .notif-no{background:none;border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-size:.84rem;color:var(--muted);cursor:pointer;font-family:inherit}
+  /* ── NOTIFICATION PERMISSION MODAL ── */
+  .notif-backdrop{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s}
+  .notif-backdrop.show{opacity:1;visibility:visible;pointer-events:auto}
+  .notif-modal{background:var(--card);border-radius:var(--radius);padding:32px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.07)}
+  .notif-modal-icon{font-size:3rem;margin-bottom:14px;display:block}
+  .notif-modal-title{font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:8px}
+  .notif-modal-sub{font-size:.85rem;color:var(--muted);line-height:1.55;margin-bottom:24px}
+  .notif-modal-btns{display:flex;flex-direction:column;gap:10px}
+  .notif-yes{background:var(--grad);color:#06121f;border:none;border-radius:999px;padding:14px 20px;font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit;width:100%}
+  .notif-no{background:none;border:1px solid var(--line);border-radius:999px;padding:12px 20px;font-size:.85rem;color:var(--muted);cursor:pointer;font-family:inherit;width:100%}
   /* CHAR BANNER — full-width guide card at top of Today chat */
   /* TODAY COMPACT HEADER */
   .today-header{display:flex;align-items:center;gap:12px;padding:14px 4px 8px}
@@ -609,9 +609,9 @@
 <nav id="nav">
   <div class="nav-glider" id="nav-glider"></div>
   <button data-tab="today"><span class="ic">🌅</span><span class="lbl">Today</span><span class="dot"></span></button>
+  <button data-tab="schedule"><span class="ic">📅</span><span class="lbl">Schedule</span><span class="dot"></span></button>
   <button data-tab="journey"><span class="ic">🗺️</span><span class="lbl">Journey</span><span class="dot"></span></button>
   <button data-tab="guides"><span class="ic">🧭</span><span class="lbl">Guides</span><span class="dot"></span></button>
-  <button data-tab="schedule"><span class="ic">📅</span><span class="lbl">Schedule</span><span class="dot"></span></button>
   <button data-tab="you"><span class="ic">✦</span><span class="lbl">You</span><span class="dot"></span></button>
 </nav>
 <div id="toast" class="toast"></div>
@@ -1808,18 +1808,26 @@ function scheduleEventReminders(){
     const evTime=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
     const warnTime=new Date(evTime.getTime()-10*60*1000);
     const diffWarn=warnTime-now, diffNow=evTime-now;
+    // Register alarm with SW (fires even if app is in background)
     if(diffWarn>0&&diffWarn<86400000){
-      setTimeout(()=>{
-        const msg=`⏰ ${ev.emoji} ${ev.title} starts in 10 minutes!`;
-        showLumi(msg,"schedule");
-        if("Notification"in window&&Notification.permission==="granted"){
-          navigator.serviceWorker?.ready.then(sw=>sw.showNotification("📅 Life Manual",{body:`${ev.emoji} ${ev.title} in 10 min`,icon:"icon-192.png",tag:"ev-"+ev.id})).catch(()=>{});
-        }
-      },diffWarn);
+      navigator.serviceWorker?.ready.then(sw=>{
+        sw.active?.postMessage({type:"SET_ALARM",id:ev.id,fireAt:warnTime.getTime(),title:ev.title,emoji:ev.emoji});
+      }).catch(()=>{});
+      // In-app fallback for when app is open
+      setTimeout(()=>showLumi(`⏰ ${ev.emoji} ${ev.title} starts in 10 minutes!`,"schedule"),diffWarn);
     }else if(diffNow>0&&diffNow<86400000){
+      navigator.serviceWorker?.ready.then(sw=>{
+        sw.active?.postMessage({type:"SET_ALARM",id:ev.id+"n",fireAt:evTime.getTime(),title:ev.title+" — starting now!",emoji:ev.emoji});
+      }).catch(()=>{});
       setTimeout(()=>showLumi(`🎯 Time for ${ev.emoji} ${ev.title}! Good luck.`,"schedule"),diffNow);
     }
   });
+}
+function clearEventAlarm(evId){
+  navigator.serviceWorker?.ready.then(sw=>{
+    sw.active?.postMessage({type:"CLEAR_ALARM",id:evId});
+    sw.active?.postMessage({type:"CLEAR_ALARM",id:evId+"n"});
+  }).catch(()=>{});
 }
 
 function renderSchedule(v){
@@ -1931,7 +1939,7 @@ function renderSchedule(v){
   function wireEvDel(){
     document.querySelectorAll("[data-ev-del]").forEach(btn=>{
       btn.onclick=()=>{
-        state.events=state.events.filter(e=>e.id!==+btn.dataset.evDel);
+        const delId=+btn.dataset.evDel; clearEventAlarm(delId); state.events=state.events.filter(e=>e.id!==delId);
         saveAll();
         const lc=$("#ev-list-card"); if(lc)lc.innerHTML=evListHTML();
         wireEvDel();
@@ -2280,7 +2288,7 @@ function showNotifBanner(){
   const banner=document.getElementById("notifBanner");
   if(!banner)return;
   const face=document.getElementById("notifBannerFace");
-  if(face)face.innerHTML=`<div class="chat-fab-emoji">${getChar().emoji}</div>`;
+  if(face)face.textContent=getChar().emoji;
   setTimeout(()=>banner.classList.add("show"),300);
   document.getElementById("notifYes").onclick=()=>{
     localStorage.setItem("lm.notif.asked","1");
@@ -2314,6 +2322,12 @@ window.addEventListener("resize",()=>{
 });
 scheduleReminders();
 scheduleEventReminders();
+// Listen for SW messages (e.g. tapping a notification opens a tab)
+navigator.serviceWorker?.addEventListener("message",e=>{
+  if(e.data?.type==="OPEN_TAB"){state.tab=e.data.tab||"today";render();window.scrollTo(0,0);}
+});
+// If app was opened from a notification URL param
+(()=>{const p=new URLSearchParams(location.search).get("tab");if(p){state.tab=p;render();}})();
 avatarPing();
 lumiOnOpen();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
@@ -2347,16 +2361,16 @@ setTimeout(initFAB, 0); // defer so FAB HTML (below script tag) is parsed first
   </div>
 </div>
 
-<!-- ── NOTIFICATION PERMISSION BANNER ── -->
-<div class="notif-banner" id="notifBanner">
-  <div class="chat-face notif-banner-face" id="notifBannerFace"></div>
-  <div class="notif-banner-body">
-    <div class="notif-banner-title">Want daily reminders? 🔔</div>
-    <div class="notif-banner-sub">I'll nudge you when your upload is ready 💜</div>
-  </div>
-  <div class="notif-banner-btns">
-    <button class="notif-yes" id="notifYes">Yes!</button>
-    <button class="notif-no" id="notifNo">✕</button>
+<!-- ── NOTIFICATION PERMISSION MODAL ── -->
+<div class="notif-backdrop" id="notifBanner">
+  <div class="notif-modal">
+    <span class="notif-modal-icon" id="notifBannerFace">🔔</span>
+    <div class="notif-modal-title">Want daily reminders?</div>
+    <div class="notif-modal-sub">I'll ping you each morning when your daily lesson is ready — so you never miss a day. 💜</div>
+    <div class="notif-modal-btns">
+      <button class="notif-yes" id="notifYes">🔔 Yes, remind me!</button>
+      <button class="notif-no" id="notifNo">No thanks, I'll check myself</button>
+    </div>
   </div>
 </div>
 </body>

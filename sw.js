@@ -1,7 +1,5 @@
-const CACHE = "lifemanual-v33";
+const CACHE = "lifemanual-v34";
 const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
-// Note: character art (characters/*.jpg) and idle videos (characters/*-idle.mp4) are
-// cached on-demand by the network-first fetch handler, not preloaded here.
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -25,5 +23,50 @@ self.addEventListener("fetch", e => {
         return res;
       })
       .catch(() => caches.match(e.request, { ignoreSearch: true }))
+  );
+});
+
+// Event alarm timers — stored here so they survive while SW is alive
+const _alarms = new Map();
+
+self.addEventListener("message", e => {
+  const d = e.data;
+  if (!d) return;
+
+  // App sends { type:"SET_ALARM", id, fireAt, title, emoji } when event is saved
+  if (d.type === "SET_ALARM") {
+    const delay = d.fireAt - Date.now();
+    if (delay < 0 || delay > 24 * 60 * 60 * 1000) return; // ignore past / >24h
+    if (_alarms.has(d.id)) clearTimeout(_alarms.get(d.id));
+    const tid = setTimeout(() => {
+      self.registration.showNotification("📅 Life Manual", {
+        body: `${d.emoji} ${d.title} starts in 10 minutes!`,
+        icon: "icon-192.png",
+        badge: "icon-192.png",
+        tag: "ev-" + d.id,
+        requireInteraction: true,
+        data: { tab: "schedule" }
+      });
+      _alarms.delete(d.id);
+    }, delay);
+    _alarms.set(d.id, tid);
+  }
+
+  // App sends { type:"CLEAR_ALARM", id } when event is deleted
+  if (d.type === "CLEAR_ALARM") {
+    if (_alarms.has(d.id)) { clearTimeout(_alarms.get(d.id)); _alarms.delete(d.id); }
+  }
+});
+
+// Tapping a notification opens the app on the Schedule tab
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const tab = e.notification.data?.tab || "today";
+  e.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      const existing = list.find(c => c.url.includes("index.html") || c.url.endsWith("/"));
+      if (existing) { existing.focus(); existing.postMessage({ type: "OPEN_TAB", tab }); }
+      else clients.openWindow("./?tab=" + tab);
+    })
   );
 });
