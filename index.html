@@ -451,7 +451,7 @@
   .y-neb1{top:-12%;right:-6%;width:72vw;height:72vw;max-width:700px;max-height:700px;background:radial-gradient(circle,rgba(251,113,133,.40),transparent 66%);animation:neb 18s ease-in-out infinite alternate}
   .y-neb2{bottom:-14%;left:-12%;width:64vw;height:64vw;max-width:620px;max-height:620px;background:radial-gradient(circle,rgba(99,102,241,.34),transparent 66%);animation:neb 23s ease-in-out infinite alternate-reverse}
   @keyframes neb{from{transform:translate(0,0) scale(1)}to{transform:translate(6vw,-4vh) scale(1.16)}}
-  @media(prefers-reduced-motion:reduce){.fly,.r-road::before,.r-post,.orb,.f-l1,.f-l2,.f-l3,.f-mist,.f-ray,.r-sun,.sc-cloud,.y-neb,.scene-stars{animation:none}}
+  @media(prefers-reduced-motion:reduce){.fly,.r-road::before,.r-post,.orb,.f-l1,.f-l2,.f-l3,.f-mist,.f-ray,.r-sun,.sc-cloud,.y-neb,.scene-stars,.kw-walker{animation:none}}
   /* ── KAWAII: pastel scene overrides ─────────────────────────────────────── */
   /* Journey → cherry blossom garden at golden hour */
   html.kawaii .scene-forest .scene-stars{opacity:0}
@@ -481,6 +481,24 @@
   html.kawaii .y-neb1{background:radial-gradient(circle,rgba(255,182,193,.58),transparent 66%)}
   html.kawaii .y-neb2{background:radial-gradient(circle,rgba(206,147,216,.48),transparent 66%)}
   html.kawaii .scene-you .scene-stars{background-image:radial-gradient(1.4px 1.4px at 20% 18%,#ffc8dd,transparent),radial-gradient(1.2px 1.2px at 62% 12%,#ffe4f5,transparent),radial-gradient(1px 1px at 80% 26%,#dfc3f5,transparent),radial-gradient(1.4px 1.4px at 35% 28%,#ffd6e8,transparent),radial-gradient(1.6px 1.6px at 50% 8%,#fff,transparent),radial-gradient(1px 1px at 90% 16%,#ffc8dd,transparent),radial-gradient(1px 1px at 10% 36%,#dfc3f5,transparent),radial-gradient(1.3px 1.3px at 72% 32%,#ffe4f5,transparent);opacity:.75}
+  /* Kawaii walkers — bounce across schedule background */
+  .kw-walker{position:absolute;left:0;line-height:1;user-select:none;display:none;filter:drop-shadow(0 2px 6px rgba(255,150,180,.55));animation:kw-walk var(--spd,36s) var(--delay,0s) linear infinite;z-index:3}
+  .kw-walker.kw-r{animation-name:kw-walk-r}
+  html.kawaii .kw-walker{display:block}
+  @keyframes kw-walk{
+    0%  {transform:translateX(-80px) translateY(0)}
+    25% {transform:translateX(25vw) translateY(-7px)}
+    50% {transform:translateX(50vw) translateY(0)}
+    75% {transform:translateX(75vw) translateY(-7px)}
+    100%{transform:translateX(calc(100vw + 80px)) translateY(0)}
+  }
+  @keyframes kw-walk-r{
+    0%  {transform:translateX(calc(100vw + 80px)) translateY(0) scaleX(-1)}
+    25% {transform:translateX(75vw) translateY(-7px) scaleX(-1)}
+    50% {transform:translateX(50vw) translateY(0) scaleX(-1)}
+    75% {transform:translateX(25vw) translateY(-7px) scaleX(-1)}
+    100%{transform:translateX(-80px) translateY(0) scaleX(-1)}
+  }
   /* Subtle sparkle dust across all kawaii scenes */
   html.kawaii .scene::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;background-image:radial-gradient(1.5px 1.5px at 8% 14%,rgba(255,192,203,.9),transparent),radial-gradient(1px 1px at 22% 7%,rgba(216,191,216,.8),transparent),radial-gradient(2px 2px at 38% 20%,rgba(255,182,193,.7),transparent),radial-gradient(1px 1px at 55% 11%,rgba(221,160,221,.8),transparent),radial-gradient(1.5px 1.5px at 71% 16%,rgba(255,192,203,.9),transparent),radial-gradient(1px 1px at 86% 9%,rgba(216,191,216,.7),transparent),radial-gradient(2px 2px at 14% 35%,rgba(255,182,193,.6),transparent),radial-gradient(1px 1px at 44% 42%,rgba(221,160,221,.7),transparent),radial-gradient(1.5px 1.5px at 68% 38%,rgba(255,192,203,.8),transparent),radial-gradient(1px 1px at 90% 30%,rgba(216,191,216,.7),transparent),radial-gradient(1.8px 1.8px at 30% 55%,rgba(255,182,193,.6),transparent),radial-gradient(1px 1px at 78% 62%,rgba(221,160,221,.7),transparent);opacity:.45}
   #view .card{transition:transform .18s ease-out,border-color .3s,box-shadow .3s}
@@ -634,6 +652,12 @@
     <div class="sc-cloud" style="top:44%;animation-delay:-11s;opacity:.5"></div>
     <div class="sc-cloud" style="top:64%;animation-delay:-5s;opacity:.7"></div>
     <i class="orb" style="left:16%;top:28%;width:120px;height:120px;animation-delay:0s"></i>
+    <span class="kw-walker"   style="--spd:34s;--delay:-4s;bottom:72%;font-size:2rem">🐰</span>
+    <span class="kw-walker kw-r" style="--spd:44s;--delay:-18s;bottom:78%;font-size:1.7rem">🐱</span>
+    <span class="kw-walker"   style="--spd:28s;--delay:-11s;bottom:66%;font-size:2.1rem">🐻</span>
+    <span class="kw-walker kw-r" style="--spd:52s;--delay:-30s;bottom:81%;font-size:1.6rem">🦊</span>
+    <span class="kw-walker"   style="--spd:40s;--delay:-22s;bottom:74%;font-size:1.9rem">🐼</span>
+    <span class="kw-walker kw-r" style="--spd:36s;--delay:-8s;bottom:69%;font-size:1.8rem">🐨</span>
     <i class="orb" style="left:70%;top:18%;width:170px;height:170px;animation-delay:2s"></i>
   </div>
   <div class="scene scene-you">
