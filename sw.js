@@ -1,4 +1,4 @@
-const CACHE = "lifemanual-v37";
+const CACHE = "lifemanual-v38";
 const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
