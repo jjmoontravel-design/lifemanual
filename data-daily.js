@@ -199,7 +199,7 @@ money: [
  {h:"Sinking funds end 'surprise' bills", d:"Christmas, car registration, and vacations are not surprises — they have dates. Divide the cost by the months left, save monthly, smile in December.", a18:1},
  {h:"The monthly money date", d:"Couples: 20 minutes, once a month, statements open, no blame. Most money fights are really surprise fights — and this kills the surprises.", a18:1},
  {h:"Payday loans: emergency exit only — and it's not an exit", d:"~400% APR turns a $300 problem into a $900 one. A credit union, a payment plan, even a credit card beats it. Almost anything beats it.", a18:1},
- {h:"Teach kids with real money", d:"Lectures bounce off; a blown allowance sticks forever. Give kids small real money and full authority to fail with it. Cheapest tuition they'll ever pay.", a18:1}
+ {h:"Teach kids with real money", d:"Lectures bounce off; a blown allowance sticks forever. Give kids small real money and full authority to fail with it. Cheapest tuition they'll ever pay."}
 ],
 
 mind: [
