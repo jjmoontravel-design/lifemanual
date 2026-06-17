@@ -199,7 +199,7 @@
   .alarm-overlay.show{opacity:1;visibility:visible;pointer-events:auto}
   .alarm-card{background:var(--card);border:1px solid var(--line);border-radius:28px;max-width:360px;width:100%;text-align:center;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.8);transform:scale(.88) translateY(30px);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
   .alarm-overlay.show .alarm-card{transform:scale(1) translateY(0)}
-  .alarm-card video{width:100%;display:block;max-height:300px;object-fit:cover}
+  .alarm-card video{width:112%;margin-left:-6%;display:block;max-height:300px;object-fit:cover}
   .alarm-body{padding:18px 24px 26px}
   .alarm-emoji{font-size:2.6rem;line-height:1;margin-bottom:6px}
   .alarm-title{font-size:1.3rem;font-weight:800;margin:0 0 5px}
@@ -2294,8 +2294,11 @@ function _checkEventsDue(){
     const warnKey=ev.id+"-warn", nowKey=ev.id+"-now";
     if(!_shownAlarms.has(warnKey)&&now>=warnMs-45000&&now<=warnMs+90000){
       _shownAlarms.add(warnKey); showAlarmPopup(ev.emoji,ev.title,"starts in 5 minutes!");
-    } else if(!_shownAlarms.has(nowKey)&&now>=evMs-45000&&now<=evMs+90000){
-      _shownAlarms.add(nowKey); showAlarmPopup(ev.emoji,ev.title,"is starting now!");
+    } else if(!_shownAlarms.has(nowKey)&&now>=evMs-45000&&now<=evMs+600000){
+      // Up to 10 minutes late — still show the popup
+      const minsLate=Math.max(0,Math.round((now-evMs)/60000));
+      const msg=minsLate<=1?"is starting now!":"started "+minsLate+" minutes ago!";
+      _shownAlarms.add(nowKey); showAlarmPopup(ev.emoji,ev.title,msg);
     }
   });
 }
