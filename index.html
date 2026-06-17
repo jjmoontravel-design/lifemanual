@@ -2636,8 +2636,10 @@ function renderStore(){
       </div>
       <button class="store-sub" id="storeSub">✨ Unlock everything — coming soon</button>
       <div class="store-note">Earn 🪙 coins by completing daily lessons, watching videos, and the weekly quiz.</div>
+      <button class="pet-care-btn" id="storeDone" style="width:100%;max-width:none;margin:16px 0 0">✓ Done</button>
     </div>`;
   ov.querySelector("#storeClose").onclick=closeStore;
+  ov.querySelector("#storeDone").onclick=closeStore;
   ov.querySelector("#storeSub").onclick=()=>toast("Subscription coming soon — earn coins to unlock for now! ✨");
   ov.querySelectorAll("[data-use]").forEach(b=>b.onclick=()=>{state.character=b.dataset.use;saveAll();closeStore();render();toast("Guide switched! 🤝");});
   ov.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{
@@ -2652,17 +2654,17 @@ function renderStore(){
 // ============ PET CARE SHOP ============
 const CARE_ITEMS={
   food:[
-    {emoji:"🍎",name:"Apple",cost:5,stat:"hunger",amt:20},
-    {emoji:"🥪",name:"Meal",cost:15,stat:"hunger",amt:60},
-    {emoji:"🍰",name:"Treat",cost:8,stat:"hunger",amt:25,bonus:"happy",bonusAmt:8}
+    {emoji:"🍎",name:"Apple",cost:1,stat:"hunger",amt:25},
+    {emoji:"🥪",name:"Meal",cost:2,stat:"hunger",amt:70},
+    {emoji:"🍰",name:"Treat",cost:1,stat:"hunger",amt:25,bonus:"happy",bonusAmt:8}
   ],
   hygiene:[
-    {emoji:"🧼",name:"Wash up",cost:10,stat:"clean",amt:50},
-    {emoji:"🛁",name:"Bubble bath",cost:18,stat:"clean",amt:100}
+    {emoji:"🧼",name:"Wash up",cost:1,stat:"clean",amt:60},
+    {emoji:"🛁",name:"Bubble bath",cost:2,stat:"clean",amt:100}
   ],
   games:[
-    {emoji:"⚽",name:"Play ball",cost:8,stat:"happy",amt:30},
-    {emoji:"🧩",name:"Puzzle",cost:14,stat:"happy",amt:60}
+    {emoji:"⚽",name:"Play ball",cost:1,stat:"happy",amt:35},
+    {emoji:"🧩",name:"Puzzle",cost:2,stat:"happy",amt:65}
   ]
 };
 function openCare(){
@@ -2698,8 +2700,10 @@ function renderCare(){
       <div class="care-sec">😴 Rest</div>
       <div class="care-grid"><button class="care-item" data-rest="1"><span class="ci-emoji">💤</span><span><span class="ci-name">Tuck in for a nap</span><br><span class="ci-cost free">Free</span></span></button></div>
       <div class="store-note" style="margin-top:18px">Earn 🪙 coins from daily lessons to keep ${nm} happy. Stats dip slowly over time.</div>
+      <button class="pet-care-btn" id="careDone" style="width:100%;max-width:none;margin:16px 0 0">✓ Done</button>
     </div>`;
   ov.querySelector("#careClose").onclick=()=>{closeCare();render();};
+  ov.querySelector("#careDone").onclick=()=>{closeCare();render();};
   ov.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{
     const it=CARE_ITEMS[b.dataset.cat].find(x=>x.name===b.dataset.name); if(!it)return;
     if(careItem(it.stat,it.amt,it.cost)){
