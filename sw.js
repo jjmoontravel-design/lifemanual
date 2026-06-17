@@ -1,5 +1,5 @@
-const CACHE = "lifemanual-v42";
-const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.jpg", "barney-hungry.jpg", "barney-sleep.jpg", "barney-excited.jpg", "barney-idle.jpg"];
+const CACHE = "lifemanual-v43";
+const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

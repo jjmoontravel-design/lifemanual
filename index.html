@@ -1218,7 +1218,7 @@ function renderToday(v){
   <div class="today-streak-row">🔥 ${state.streak.n}-day streak &nbsp;·&nbsp; ✨ ${state.xp} XP</div>
   ${(()=>{const _m=barneyMood(),_c=gotCount(),_msg=_m==="happy"?`So close! Just ${7-_c} more — let's finish strong! 🌟`:BARNEY_MSGS[_m];
   return`<div class="card barney-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px">
-    <img src="barney-${_m}.jpg" class="barney-img barney-${_m}" alt="Barney" style="width:80px;height:80px;flex:none">
+    <img src="barney-${_m}.png" class="barney-img barney-${_m}" alt="Barney" style="width:80px;height:80px;flex:none">
     <div style="flex:1;min-width:0">
       <div style="font-size:.85rem;font-weight:600;margin-bottom:4px">Barney <span style="font-size:.75rem;font-weight:400;color:var(--muted)">your life guide bear</span></div>
       <div style="font-size:.83rem;line-height:1.4;color:var(--ink)">${_msg}</div>
