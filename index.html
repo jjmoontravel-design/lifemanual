@@ -846,13 +846,25 @@ function barneyMood(){
   if(count<=6)return"happy";
   return"excited";
 }
-const BARNEY_MSGS={
-  sleep:`Zzz... *yawn* You were gone so long! My lantern went dim... 😴`,
-  hungry:`Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}! I'm starving — go tap some cards! 🍪`,
-  idle:`Keep going, we're on a roll! Tap more cards! 🤔`,
-  happy:`So close! Just a few more — let's finish strong! 🌟`,
-  excited:`YES!! You fed me all 7 today!! I'm SO happy!! 🎉`
-};
+// Companion message — phrased around the user's chosen guide (works for any character).
+function companionMsg(mood){
+  const nm=getChar().name, left=7-gotCount();
+  const hr=new Date().getHours(), greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+  switch(mood){
+    case "sleep":   return `${nm} dozed off waiting for you… 😴 Tap a card to dive back in.`;
+    case "hungry":  return `${greet}! ${nm} is ready — tap your first card to begin. ✨`;
+    case "idle":    return `Nice momentum! Keep going — ${nm}'s right beside you. 🔥`;
+    case "happy":   return `So close! Just ${left} more — let's finish strong! 🌟`;
+    case "excited": return `All 7 done! ${nm} is so proud of you today! 🎉`;
+  }
+  return "";
+}
+// Companion clip: the bear mascot has full mood clips; other guides use their idle clip.
+function companionImg(mood){
+  const c=getChar();
+  if(c.id==="bear") return {webp:`barney-${mood}.webp`, fallback:`barney-${mood}.png`};
+  return {webp:`characters/${c.id}-idle.webp`, fallback:`characters/${c.id}.jpg`};
+}
 const CAT={
   skill:{label:"Skill of the day",icon:"🛠️",color:"#818cf8"},
   vocab:{label:"Word of the day",icon:"📖",color:"#a78bfa"},
@@ -1288,12 +1300,12 @@ function renderToday(v){
     <div class="today-progress-pill">${n}<span>/${SLOTS.length}</span></div>
   </div>
   <div class="today-streak-row">🔥 ${state.streak.n}-day streak &nbsp;·&nbsp; ✨ ${state.xp} XP</div>
-  ${(()=>{const _m=barneyMood(),_c=gotCount(),_msg=_m==="happy"?`So close! Just ${7-_c} more — let's finish strong! 🌟`:BARNEY_MSGS[_m];
+  ${(()=>{const _m=barneyMood(),_c=gotCount(),_msg=companionMsg(_m),_img=companionImg(_m);
   return`<div style="text-align:center;padding:8px 16px 4px">
-    <img src="barney-${_m}.webp" class="barney-img barney-${_m}" alt="Barney" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,.4))" onerror="this.onerror=null;this.src='barney-${_m}.png'">
+    <img src="${_img.webp}" class="barney-img barney-${_m}" alt="${getChar().name}" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,.4))" onerror="this.onerror=null;this.src='${_img.fallback}'">
     <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:9px 14px;font-size:.84rem;line-height:1.45;margin:6px auto 10px;max-width:260px">${_msg}</div>
     <div style="max-width:200px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>🍪 Daily feed</span><span>${_c}/7</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>✨ Today's progress</span><span>${_c}/7</span></div>
       <div class="bar" style="margin:0;height:7px"><i style="width:${Math.round(_c/7*100)}%"></i></div>
     </div>
   </div>`})()}
