@@ -380,6 +380,26 @@
   .store-badge.cur{background:#34d39922;color:#34d399;border:1px solid #34d39944}
   .store-sub{width:100%;margin:18px 0 10px;padding:14px;border-radius:14px;border:1px dashed #c084fc66;background:#c084fc14;color:#c084fc;font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer}
   .store-note{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.5}
+  /* VIRTUAL PET STATS + CARE */
+  .pet-stats{display:flex;gap:8px;max-width:300px;margin:6px auto 0}
+  .pet-stat{flex:1;display:flex;align-items:center;gap:4px}
+  .pet-stat>span{font-size:.95rem;flex:none}
+  .pet-bar{flex:1;height:8px;border-radius:5px;background:var(--card2);overflow:hidden;border:1px solid var(--line)}
+  .pet-bar i{display:block;height:100%;border-radius:5px;transition:width .5s ease}
+  .pet-care-btn{margin:12px auto 0;display:block;background:linear-gradient(120deg,#a78bfa,#22d3ee);color:#fff;border:none;border-radius:14px;padding:11px 24px;font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.35)}
+  .pet-care-btn:active{transform:scale(.96)}
+  .care-statrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .care-statrow .lbl{width:96px;flex:none;font-size:.86rem;font-weight:700;display:flex;align-items:center;gap:6px}
+  .care-statrow .pet-bar{height:11px}
+  .care-statrow .pct{width:38px;text-align:right;flex:none;font-size:.78rem;color:var(--muted)}
+  .care-sec{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;font-weight:800}
+  .care-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .care-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}
+  .care-item:active{transform:scale(.97)}
+  .care-item .ci-emoji{font-size:1.5rem;flex:none}
+  .care-item .ci-name{font-weight:700;font-size:.88rem;line-height:1.1}
+  .care-item .ci-cost{font-size:.78rem;color:#fbbf24;font-weight:800}
+  .care-item .ci-cost.free{color:#34d399}
   .hidden{display:none !important}
   .lib-entry .h{font-weight:700;margin-bottom:4px}
   .lib-entry .d{color:var(--muted);font-size:.9rem;line-height:1.45}
@@ -800,7 +820,7 @@ async function syncEventsToWorker(){
     body:JSON.stringify({userId:getPushUserId(),events:state.events})}).catch(()=>{});
 }
 
-const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender"};
+const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet"};
 // Coin cost to unlock each guide. Barney (bear) is free — everyone starts with him.
 const CHAR_COST={bear:0, beaver:150, wolf:150, lion:150, elephant:150, panda:100, capybara:100, cat:100, bunny:100, dolphin:100, fox:100, eagle:100, tiger:100, raccoon:100, penguin:75, owl:75, ant:75, deer:75, turtle:75};
 function charCost(id){return CHAR_COST[id]==null?100:CHAR_COST[id];}
@@ -820,6 +840,7 @@ let state={
   interests:JSON.parse(localStorage.getItem("lifemanual.interests")||"[]"),
   lifeStage:localStorage.getItem("lifemanual.lifestage")||"",
   gender:localStorage.getItem("lifemanual.gender")||"",
+  pet:JSON.parse(localStorage.getItem("lifemanual.pet")||"null"),
   tab:"today", search:"", bandFilter:null, libFilter:"vocab", journeyMode:"path"
 };
 BANDS.forEach(b=>b.skills.forEach((s,i)=>s.id=b.id+"-"+i));
@@ -861,30 +882,50 @@ function feedOrder(){
   return order;
 }
 
-// ── Barney virtual pet (defined early so renderToday can always use them) ──
-const _barneyPrevOpen=parseInt(localStorage.getItem("lm.lastOpen")||"0");
-localStorage.setItem("lm.lastOpen",Date.now());
-function barneyMood(){
-  const hoursSince=_barneyPrevOpen?(Date.now()-_barneyPrevOpen)/3600000:0;
-  const count=gotCount();
-  if(_barneyPrevOpen&&hoursSince>24)return"sleep";
-  if(count===0)return"hungry";
-  if(count<=3)return"idle";
-  if(count<=6)return"happy";
-  return"excited";
+// ── Virtual pet: 4 care stats with gentle real-time decay ──
+const PET_STATS=["hunger","clean","happy","energy"];
+const PET_DECAY=0.5; // points/hour per stat (gentle ≈ 12/day)
+function ensurePet(){
+  if(!state.pet||typeof state.pet!=="object")state.pet={hunger:80,clean:80,happy:80,energy:90,t:Date.now()};
 }
-// Companion message — phrased around the user's chosen guide (works for any character).
-function companionMsg(mood){
-  const nm=getChar().name, left=7-gotCount();
-  const hr=new Date().getHours(), greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
-  switch(mood){
-    case "sleep":   return `${nm} dozed off waiting for you… 😴 Tap a card to dive back in.`;
-    case "hungry":  return `${greet}! ${nm} is ready — tap your first card to begin. ✨`;
-    case "idle":    return `Nice momentum! Keep going — ${nm}'s right beside you. 🔥`;
-    case "happy":   return `So close! Just ${left} more — let's finish strong! 🌟`;
-    case "excited": return `All 7 done! ${nm} is so proud of you today! 🎉`;
+function decayPet(){
+  ensurePet();
+  const now=Date.now(), hrs=Math.max(0,(now-(state.pet.t||now))/3600000);
+  if(hrs>0){
+    PET_STATS.forEach(k=>{state.pet[k]=Math.max(0,Math.min(100,(state.pet[k]==null?80:state.pet[k])-PET_DECAY*hrs));});
+    state.pet.t=now;
   }
-  return "";
+}
+function petAvg(){ensurePet();return Math.round(PET_STATS.reduce((s,k)=>s+(state.pet[k]||0),0)/PET_STATS.length);}
+// Which mood clip to play, based on care stats (reuses the existing clips — simple movement).
+function barneyMood(){
+  ensurePet();
+  const p=state.pet;
+  if(p.hunger<25)return "hungry";
+  if(p.energy<25)return "sleep";
+  const avg=petAvg();
+  if(avg>=85)return "excited";
+  if(avg<40)return "hungry"; // neglected & sad
+  if(avg>=62)return "happy";
+  return "idle";
+}
+// Care-aware companion message — nudges toward whatever the pet needs most.
+function companionMsg(){
+  ensurePet();
+  const nm=getChar().name, p=state.pet;
+  if(p.hunger<25)return `${nm} is getting hungry — time for a snack! 🍎`;
+  if(p.energy<25)return `${nm} is sleepy… let them rest a bit. 😴`;
+  if(p.clean<30)return `${nm} could use a wash-up. 🧼`;
+  if(p.happy<35)return `${nm} is a little bored — play a game? 🎮`;
+  if(petAvg()>=85)return `${nm} is thriving and so happy to see you! 🌟`;
+  return `${nm} is doing great. Keep it up! 💜`;
+}
+// Apply a care item: spend coins, top up a stat. Returns true if purchased.
+function careItem(stat,amount,cost){
+  ensurePet();
+  if(state.coins<cost){toast("Not enough coins — "+(cost-state.coins)+" more 🪙");return false;}
+  state.coins-=cost; state.pet[stat]=Math.min(100,(state.pet[stat]||0)+amount); state.pet.t=Date.now();
+  saveAll(); return true;
 }
 // Companion clip: the two starter guides (Barney/bear, Penny/bunny) have full mood clips;
 // every other guide uses its single idle clip.
@@ -967,6 +1008,7 @@ function saveAll(){
   localStorage.setItem(K.coins,state.coins);
   localStorage.setItem(K.unlocked,JSON.stringify(state.unlocked||["bear"]));
   if(state.gender)localStorage.setItem(K.gender,state.gender);
+  if(state.pet)localStorage.setItem(K.pet,JSON.stringify(state.pet));
   localStorage.setItem(K.history,JSON.stringify(state.history));
   localStorage.setItem(K.events,JSON.stringify(state.events));
   if(state.character)localStorage.setItem(K.character,state.character);
@@ -1031,6 +1073,7 @@ function markGot(slot){
   state.daily.got[slot]=true;
   // 1 coin per card. xp tracks lifetime coins earned (drives the operator level; never spent).
   state.coins+=1; state.xp+=1;
+  ensurePet(); state.pet.happy=Math.min(100,(state.pet.happy||0)+3); // lessons cheer your pet up
   if(slot==="skill"&&state.daily.skillId)state.done[state.daily.skillId]=true;
   const complete=gotCount()===SLOTS.length;
   state.history[todayKey()]=gotCount();
@@ -1345,12 +1388,15 @@ function renderToday(v){
     <div class="today-progress-pill">${n}<span>/${SLOTS.length}</span></div>
   </div>
   <div class="today-streak-row">🔥 ${state.streak.n}-day streak &nbsp;·&nbsp; 🪙 ${state.coins} coins</div>
-  ${(()=>{const _m=barneyMood(),_c=gotCount(),_msg=companionMsg(_m),_img=companionImg(_m);
+  ${(()=>{decayPet();const _m=barneyMood(),_c=gotCount(),_msg=companionMsg(),_img=companionImg(_m),nm=getChar().name;
+  const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
   return`<div style="text-align:center;padding:8px 16px 4px">
-    <img src="${_img.webp}" class="barney-img barney-${_m}" alt="${getChar().name}" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,.4))" onerror="this.onerror=null;this.src='${_img.fallback}'">
+    <img src="${_img.webp}" class="barney-img barney-${_m}" alt="${nm}" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,.4))" onerror="this.onerror=null;this.src='${_img.fallback}'">
     <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:9px 14px;font-size:.84rem;line-height:1.45;margin:6px auto 10px;max-width:260px">${_msg}</div>
-    <div style="max-width:200px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>✨ Today's progress</span><span>${_c}/7</span></div>
+    <div class="pet-stats">${stats.map(s=>`<div class="pet-stat"><span>${s[1]}</span><div class="pet-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
+    <button class="pet-care-btn" data-care="1">🛒 Care for ${nm}</button>
+    <div style="max-width:220px;margin:12px auto 0">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>✨ Today's lessons</span><span>${_c}/7</span></div>
       <div class="bar" style="margin:0;height:7px"><i style="width:${Math.round(_c/7*100)}%"></i></div>
     </div>
   </div>`})()}
@@ -1569,7 +1615,7 @@ function renderMore(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],interests:[],lifeStage:"",gender:"",tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],interests:[],lifeStage:"",gender:"",pet:null,tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
   const lumiOnCk=document.getElementById("lumiOn");
@@ -1613,6 +1659,7 @@ document.addEventListener("click",e=>{
   const gb=e.target.closest("[data-guideback]");if(gb){state.guideId=null;render();window.scrollTo(0,0);return;}
   const og=e.target.closest("[data-open-guide]");if(og){state.tab="guides";state.guideId=og.dataset.openGuide;render();window.scrollTo(0,0);return;}
   const got=e.target.closest("[data-got]");if(got){markGot(got.dataset.got);return;}
+  const careBtn=e.target.closest("[data-care]");if(careBtn){openCare();return;}
   const jm=e.target.closest("[data-jmode]");if(jm){state.journeyMode=jm.dataset.jmode;render();return;}
   const lib=e.target.closest("[data-lib]");if(lib){state.libFilter=lib.dataset.lib;state.search="";render();return;}
   const pill=e.target.closest(".pill[data-band]");if(pill){state.bandFilter=pill.dataset.band||null;render();return;}
@@ -2456,7 +2503,7 @@ function renderYou(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],events:[],character:"",interests:[],lifeStage:"",gender:"",tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],events:[],character:"",interests:[],lifeStage:"",gender:"",pet:null,tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
 }
@@ -2600,6 +2647,67 @@ function renderStore(){
     state.coins-=cost; state.unlocked=(state.unlocked||["bear"]).concat(id); saveAll();
     renderStore(); toast("Unlocked "+(ch?ch.name:"")+"! 🎉 Tap Use to switch.");
   });
+}
+
+// ============ PET CARE SHOP ============
+const CARE_ITEMS={
+  food:[
+    {emoji:"🍎",name:"Apple",cost:5,stat:"hunger",amt:20},
+    {emoji:"🥪",name:"Meal",cost:15,stat:"hunger",amt:60},
+    {emoji:"🍰",name:"Treat",cost:8,stat:"hunger",amt:25,bonus:"happy",bonusAmt:8}
+  ],
+  hygiene:[
+    {emoji:"🧼",name:"Wash up",cost:10,stat:"clean",amt:50},
+    {emoji:"🛁",name:"Bubble bath",cost:18,stat:"clean",amt:100}
+  ],
+  games:[
+    {emoji:"⚽",name:"Play ball",cost:8,stat:"happy",amt:30},
+    {emoji:"🧩",name:"Puzzle",cost:14,stat:"happy",amt:60}
+  ]
+};
+function openCare(){
+  let ov=document.getElementById("careOverlay"); if(ov)ov.remove();
+  ov=document.createElement("div"); ov.id="careOverlay"; ov.className="store-ov";
+  document.body.appendChild(ov); document.body.style.overflow="hidden";
+  renderCare();
+}
+function closeCare(){const ov=document.getElementById("careOverlay");if(ov)ov.remove();document.body.style.overflow="";}
+function renderCare(){
+  const ov=document.getElementById("careOverlay"); if(!ov)return;
+  ensurePet(); decayPet();
+  const nm=getChar().name;
+  const statRow=(emoji,label,key,color)=>`<div class="care-statrow"><span class="lbl">${emoji} ${label}</span><div class="pet-bar"><i style="width:${Math.round(state.pet[key])}%;background:${color}"></i></div><span class="pct">${Math.round(state.pet[key])}%</span></div>`;
+  const itemBtn=(it,cat)=>`<button class="care-item" data-cat="${cat}" data-name="${it.name}"><span class="ci-emoji">${it.emoji}</span><span><span class="ci-name">${it.name}</span><br><span class="ci-cost">🪙 ${it.cost}</span></span></button>`;
+  ov.innerHTML=`
+    <div class="store-head">
+      <button class="store-close" id="careClose">←</button>
+      <div class="store-title">Care for ${nm}</div>
+      <div class="store-coins">🪙 ${state.coins}</div>
+    </div>
+    <div class="store-body">
+      ${statRow("🍎","Hunger","hunger","#fbbf24")}
+      ${statRow("🧼","Clean","clean","#38bdf8")}
+      ${statRow("🎮","Happy","happy","#f472b6")}
+      ${statRow("😴","Energy","energy","#a78bfa")}
+      <div class="care-sec">🍎 Food</div>
+      <div class="care-grid">${CARE_ITEMS.food.map(it=>itemBtn(it,"food")).join("")}</div>
+      <div class="care-sec">🧼 Hygiene</div>
+      <div class="care-grid">${CARE_ITEMS.hygiene.map(it=>itemBtn(it,"hygiene")).join("")}</div>
+      <div class="care-sec">🎮 Games</div>
+      <div class="care-grid">${CARE_ITEMS.games.map(it=>itemBtn(it,"games")).join("")}</div>
+      <div class="care-sec">😴 Rest</div>
+      <div class="care-grid"><button class="care-item" data-rest="1"><span class="ci-emoji">💤</span><span><span class="ci-name">Tuck in for a nap</span><br><span class="ci-cost free">Free</span></span></button></div>
+      <div class="store-note" style="margin-top:18px">Earn 🪙 coins from daily lessons to keep ${nm} happy. Stats dip slowly over time.</div>
+    </div>`;
+  ov.querySelector("#careClose").onclick=()=>{closeCare();render();};
+  ov.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{
+    const it=CARE_ITEMS[b.dataset.cat].find(x=>x.name===b.dataset.name); if(!it)return;
+    if(careItem(it.stat,it.amt,it.cost)){
+      if(it.bonus)state.pet[it.bonus]=Math.min(100,(state.pet[it.bonus]||0)+it.bonusAmt);
+      saveAll(); toast(it.emoji+" "+nm+" loved that!"); renderCare();
+    }
+  });
+  ov.querySelector("[data-rest]").onclick=()=>{ensurePet();state.pet.energy=100;state.pet.t=Date.now();saveAll();toast("💤 "+nm+" had a cozy nap!");renderCare();};
 }
 
 function initFAB(){
