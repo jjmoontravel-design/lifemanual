@@ -800,7 +800,7 @@ async function syncEventsToWorker(){
     body:JSON.stringify({userId:getPushUserId(),events:state.events})}).catch(()=>{});
 }
 
-const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked"};
+const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender"};
 // Coin cost to unlock each guide. Barney (bear) is free — everyone starts with him.
 const CHAR_COST={bear:0, beaver:150, wolf:150, lion:150, elephant:150, panda:100, capybara:100, cat:100, bunny:100, dolphin:100, fox:100, eagle:100, tiger:100, raccoon:100, penguin:75, owl:75, ant:75, deer:75, turtle:75};
 function charCost(id){return CHAR_COST[id]==null?100:CHAR_COST[id];}
@@ -819,6 +819,7 @@ let state={
   character:localStorage.getItem("lifemanual.character")||"",
   interests:JSON.parse(localStorage.getItem("lifemanual.interests")||"[]"),
   lifeStage:localStorage.getItem("lifemanual.lifestage")||"",
+  gender:localStorage.getItem("lifemanual.gender")||"",
   tab:"today", search:"", bandFilter:null, libFilter:"vocab", journeyMode:"path"
 };
 BANDS.forEach(b=>b.skills.forEach((s,i)=>s.id=b.id+"-"+i));
@@ -851,7 +852,7 @@ const INTERESTS=[
 function feedOrder(){
   const picks=state.interests||[];
   const order=[];
-  if(picks[0]&&typeof INTEREST_PACKS!=="undefined"&&INTEREST_PACKS[picks[0]])order.push("foryou");
+  if(picks[0]&&typeof INTEREST_PACKS!=="undefined"&&INTEREST_PACKS[picks[0]]&&packOkForAge(picks[0]))order.push("foryou");
   picks.forEach(id=>{
     const it=INTERESTS.find(x=>x.id===id);
     if(it)it.slots.forEach(s=>{if(!order.includes(s))order.push(s);});
@@ -964,6 +965,7 @@ function saveAll(){
   localStorage.setItem(K.xp,state.xp);
   localStorage.setItem(K.coins,state.coins);
   localStorage.setItem(K.unlocked,JSON.stringify(state.unlocked||["bear"]));
+  if(state.gender)localStorage.setItem(K.gender,state.gender);
   localStorage.setItem(K.history,JSON.stringify(state.history));
   localStorage.setItem(K.events,JSON.stringify(state.events));
   if(state.character)localStorage.setItem(K.character,state.character);
@@ -999,9 +1001,13 @@ function pickMoney(){
   const n=dayNum();
   return pool[((n*13+1)%pool.length+pool.length)%pool.length];
 }
+// Minimum age for adult-oriented interest packs (so minors don't get e.g. salary-negotiation tips).
+const PACK_MIN_AGE={career:16, home:14};
+function packOkForAge(id){const age=state.age||99;return age>=(PACK_MIN_AGE[id]||0);}
 function pickForYou(){
   const id=(state.interests||[])[0];
-  const pack=(id&&typeof INTEREST_PACKS!=="undefined")?INTEREST_PACKS[id]:null;
+  if(!id||!packOkForAge(id))return null;
+  const pack=(typeof INTEREST_PACKS!=="undefined")?INTEREST_PACKS[id]:null;
   if(!pack||!pack.items||!pack.items.length)return null;
   const n=dayNum(), it=pack.items[((n*29+7)%pack.items.length+pack.items.length)%pack.items.length];
   return {item:it, pack:pack};
@@ -1562,7 +1568,7 @@ function renderMore(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],interests:[],lifeStage:"",tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],interests:[],lifeStage:"",gender:"",tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
   const lumiOnCk=document.getElementById("lumiOn");
@@ -1630,8 +1636,8 @@ const OB_TOTAL=7;
 function startOnboard(step){
   const lc=getLumiCfg();
   ob={step:step||0, initial:!step, draft:{
-    name:state.name||"", age:state.age||"", goal:state.goal||"", character:(state.character==="bunny"?"bunny":"bear"),
-    interests:(state.interests||[]).slice(), lifeStage:state.lifeStage||"",
+    name:state.name||"", age:state.age||"", goal:state.goal||"", character:((state.character==="bunny"||state.character==="bear")?state.character:""),
+    interests:(state.interests||[]).slice(), lifeStage:state.lifeStage||"", gender:state.gender||"",
     remOn:lc.on, morning:lc.morning||"08:00", evening:lc.evening||"20:00"
   }};
   $("#overlay").classList.remove("hidden");
@@ -1654,9 +1660,12 @@ function renderOnboard(){
   }else if(ob.step===1){
     b.innerHTML=`<div class="ob-emoji">😊</div>
       <h2>First, the basics</h2>
-      <p>What should I call you, and how old are you? Your age tunes the skills that fit your stage.</p>
+      <p>Tell me a little about you so this feels like <b>yours</b>. Your age tunes the skills that fit your stage.</p>
       <input class="ob-input" id="ob-name" placeholder="Your name" value="${(d.name||"").replace(/"/g,"&quot;")}" maxlength="24" autocomplete="given-name">
       <input class="ob-input ob-age" id="ob-age" type="number" min="6" max="120" placeholder="Your age" value="${d.age||""}" style="margin-top:4px">
+      <div class="opt-grid" id="ob-gender" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+        ${[["male","♂","Male"],["female","♀","Female"],["other","✨","Other"]].map(g=>`<button class="opt-tile ${d.gender===g[0]?"sel":""}" data-gender="${g[0]}" style="flex-direction:column;text-align:center;gap:3px"><span class="oe">${g[1]}</span><span style="font-size:.82rem">${g[2]}</span></button>`).join("")}
+      </div>
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
       <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===2){
@@ -1674,8 +1683,8 @@ function renderOnboard(){
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
       <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===4){
-    // Pick a free starter guide: Barney (bear) or Penny (bunny). Others unlock with coins.
-    if(d.character!=="bear"&&d.character!=="bunny")d.character="bear";
+    // Pick a free starter guide: Barney (bear) or Penny (bunny). Pre-selected from gender. Others unlock with coins.
+    if(d.character!=="bear"&&d.character!=="bunny")d.character=(d.gender==="female")?"bunny":"bear";
     const starters=["bear","bunny"];
     b.innerHTML=`<div class="ob-emoji">🤝</div>
       <h2>Pick your starter guide</h2>
@@ -1713,6 +1722,10 @@ function renderOnboard(){
   const chars=b.querySelector("#ob-chars");
   if(chars)chars.addEventListener("click",e=>{const t=e.target.closest("[data-char]");if(!t)return;
     ob.draft.character=t.dataset.char;ob.draft._guideTouched=true;chars.querySelectorAll(".char-tile").forEach(x=>x.classList.toggle("sel",x===t));});
+  const gender=b.querySelector("#ob-gender");
+  if(gender)gender.addEventListener("click",e=>{const t=e.target.closest("[data-gender]");if(!t)return;
+    ob.draft.gender=t.dataset.gender;
+    gender.querySelectorAll(".opt-tile").forEach(x=>x.classList.toggle("sel",x===t));});
   const stages=b.querySelector("#ob-stages");
   if(stages)stages.addEventListener("click",e=>{const t=e.target.closest("[data-stage]");if(!t)return;
     ob.draft.lifeStage=ob.draft.lifeStage===t.dataset.stage?"":t.dataset.stage;
@@ -1752,6 +1765,7 @@ function obFinish(){
   }
   state.interests=(d.interests||[]).slice(); localStorage.setItem(K.interests,JSON.stringify(state.interests));
   state.lifeStage=d.lifeStage||""; localStorage.setItem(K.lifeStage,state.lifeStage);
+  state.gender=d.gender||""; localStorage.setItem(K.gender,state.gender);
   const ch=getChar();
   state.goal=ch.goal||""; localStorage.setItem(K.goal,state.goal);
   if(d.age){state.age=d.age;localStorage.setItem(K.age,d.age);}
@@ -2441,7 +2455,7 @@ function renderYou(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],events:[],character:"",interests:[],lifeStage:"",tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,coins:0,unlocked:["bear"],events:[],character:"",interests:[],lifeStage:"",gender:"",tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
 }
