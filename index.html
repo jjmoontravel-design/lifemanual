@@ -1627,8 +1627,8 @@ let ob={step:0,draft:{}};
 const OB_TOTAL=7;
 function startOnboard(step){
   const lc=getLumiCfg();
-  ob={step:step||0,draft:{
-    name:state.name||"", age:state.age||"", goal:state.goal||"", character:state.character||"elephant",
+  ob={step:step||0, initial:!step, draft:{
+    name:state.name||"", age:state.age||"", goal:state.goal||"", character:(state.character==="bunny"?"bunny":"bear"),
     interests:(state.interests||[]).slice(), lifeStage:state.lifeStage||"",
     remOn:lc.on, morning:lc.morning||"08:00", evening:lc.evening||"20:00"
   }};
@@ -1672,14 +1672,17 @@ function renderOnboard(){
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
       <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===4){
-    // Everyone starts with Barney the bear (he has the full mood set). Others unlock with coins.
-    d.character="bear";
-    const bear=CHARACTERS.find(x=>x.id==="bear")||CHARACTERS[0];
-    const rec=(()=>{const f=d.interests[0]?INTERESTS.find(x=>x.id===d.interests[0]):null;if(!f)return null;return CHARACTERS.find(x=>x.id===f.guide);})();
-    b.innerHTML=`<div class="ob-emoji">🐻</div>
-      <h2>Meet Barney</h2>
-      <div style="width:120px;height:120px;margin:4px auto 8px">${charVideoHTML(bear)}</div>
-      <p>Barney is your starter guide${d.name?", "+d.name:""} — he'll bring your daily lessons and cheer you on. As you complete lessons you'll earn <b>🪙 coins</b> to unlock more guides${rec?`, like <b>${rec.name}</b> for ${rec.pillar.toLowerCase()}`:""}.</p>
+    // Pick a free starter guide: Barney (bear) or Penny (bunny). Others unlock with coins.
+    if(d.character!=="bear"&&d.character!=="bunny")d.character="bear";
+    const starters=["bear","bunny"];
+    b.innerHTML=`<div class="ob-emoji">🤝</div>
+      <h2>Pick your starter guide</h2>
+      <p>Choose the friend who'll walk with you${d.name?", "+d.name:""}. You'll unlock the others with 🪙 coins as you go.</p>
+      <div class="char-grid" id="ob-chars" style="grid-template-columns:repeat(2,1fr)">${starters.map(id=>{const ch=CHARACTERS.find(x=>x.id===id);return `<button class="char-tile ${d.character===id?"sel":""}" data-char="${id}" style="--cc:${ch.color}">
+        <span class="ct-face" style="width:84px;height:84px">${charVideoHTML(ch)}</span>
+        <span class="ct-name">${ch.name}</span>
+        <span class="ct-pillar">${id==="bear"?"♂ Barney":"♀ Penny"} · ${ch.pillar}</span>
+      </button>`;}).join("")}</div>
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>`;
   }else if(ob.step===5){
     b.innerHTML=`<div class="ob-emoji">🔔</div>
@@ -1739,8 +1742,12 @@ function obNext(){
 function obFinish(){
   const d=ob.draft;
   state.name=d.name||""; localStorage.setItem(K.name,state.name);
-  state.character="bear"; localStorage.setItem(K.character,"bear"); // everyone starts with Barney
-  if(!Array.isArray(state.unlocked)||!state.unlocked.includes("bear"))state.unlocked=["bear"];
+  if(ob.initial){
+    // First-time setup: lock in the chosen free starter (Barney or Penny) as the only unlocked guide.
+    const starter=(d.character==="bunny")?"bunny":"bear";
+    state.character=starter; localStorage.setItem(K.character,starter);
+    state.unlocked=[starter];
+  }
   state.interests=(d.interests||[]).slice(); localStorage.setItem(K.interests,JSON.stringify(state.interests));
   state.lifeStage=d.lifeStage||""; localStorage.setItem(K.lifeStage,state.lifeStage);
   const ch=getChar();
