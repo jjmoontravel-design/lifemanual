@@ -354,6 +354,13 @@
   .ct-face{width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--cc)}
   .ct-name{font-size:.82rem;font-weight:800;line-height:1.1}
   .ct-pillar{font-size:.6rem;color:var(--muted);line-height:1.15;text-align:center}
+  /* INTERVIEW OPTION TILES (life stage + interests) */
+  .opt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:4px 0 6px}
+  .opt-tile{position:relative;display:flex;align-items:center;gap:9px;padding:13px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);cursor:pointer;font-family:inherit;color:var(--ink);font-size:.9rem;font-weight:600;text-align:left;line-height:1.2;transition:transform .12s,border-color .2s,box-shadow .2s}
+  .opt-tile:active{transform:scale(.96)}
+  .opt-tile .oe{font-size:1.3rem;flex:none}
+  .opt-tile.sel{border-color:#a78bfa;box-shadow:0 0 0 2px #a78bfa inset,0 6px 16px rgba(124,58,237,.3)}
+  .opt-rank{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;background:#a78bfa;color:#fff;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}
   .hidden{display:none !important}
   .lib-entry .h{font-weight:700;margin-bottom:4px}
   .lib-entry .d{color:var(--muted);font-size:.9rem;line-height:1.45}
@@ -773,7 +780,7 @@ async function syncEventsToWorker(){
     body:JSON.stringify({userId:getPushUserId(),events:state.events})}).catch(()=>{});
 }
 
-const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character"};
+const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage"};
 let state={
   age:parseInt(localStorage.getItem(K.age))||null,
   name:localStorage.getItem(K.name)||"",
@@ -785,11 +792,47 @@ let state={
   history:JSON.parse(localStorage.getItem(K.history)||"{}"),
   events:JSON.parse(localStorage.getItem("lifemanual.events")||"[]"),
   character:localStorage.getItem("lifemanual.character")||"",
+  interests:JSON.parse(localStorage.getItem("lifemanual.interests")||"[]"),
+  lifeStage:localStorage.getItem("lifemanual.lifestage")||"",
   tab:"today", search:"", bandFilter:null, libFilter:"vocab", journeyMode:"path"
 };
 BANDS.forEach(b=>b.skills.forEach((s,i)=>s.id=b.id+"-"+i));
 const SLOTS=["skill","vocab","body","money","mind","world","challenge"];
 const LEVELS=["Initiate","Apprentice","Explorer","Builder","Mentor","Sage","Luminary","Legend"];
+
+// ── Onboarding interview: life stages + interests (tailor the daily feed) ──
+const LIFE_STAGES=[
+  {id:"school",  emoji:"🎒", label:"In school / learning"},
+  {id:"starting",emoji:"🌱", label:"Just starting out"},
+  {id:"career",  emoji:"💼", label:"Building my career"},
+  {id:"family",  emoji:"👨‍👩‍👧", label:"Raising a family"},
+  {id:"household",emoji:"🏡", label:"Running a household"},
+  {id:"later",   emoji:"🌙", label:"Later chapter / retired"}
+];
+// Each interest maps to one or more daily feed slots + a suggested guide.
+const INTERESTS=[
+  {id:"money",        emoji:"💰", label:"Money & saving",       slots:["money"],            guide:"beaver"},
+  {id:"cooking",      emoji:"🍳", label:"Cooking & food",       slots:["skill"],            guide:"panda"},
+  {id:"health",       emoji:"🫀", label:"Health & body",        slots:["body"],             guide:"wolf"},
+  {id:"career",       emoji:"💼", label:"Career & work",        slots:["world","skill"],    guide:"eagle"},
+  {id:"home",         emoji:"🏠", label:"Home & living",        slots:["skill"],            guide:"capybara"},
+  {id:"relationships",emoji:"❤️", label:"Relationships",        slots:["mind"],             guide:"dolphin"},
+  {id:"calm",         emoji:"🧠", label:"Mental health & calm", slots:["mind"],             guide:"cat"},
+  {id:"parenting",    emoji:"👶", label:"Teaching my kids",     slots:["skill"],            guide:"elephant"},
+  {id:"tech",         emoji:"📱", label:"Tech & digital",       slots:["world"],            guide:"raccoon"},
+  {id:"confidence",   emoji:"🦁", label:"Confidence",           slots:["challenge","mind"], guide:"lion"}
+];
+// Daily feed order: lead with the slots tied to the user's ranked interests, then the rest.
+function feedOrder(){
+  const picks=state.interests||[];
+  const order=[];
+  picks.forEach(id=>{
+    const it=INTERESTS.find(x=>x.id===id);
+    if(it)it.slots.forEach(s=>{if(!order.includes(s))order.push(s);});
+  });
+  SLOTS.forEach(s=>{if(!order.includes(s))order.push(s);});
+  return order;
+}
 
 // ── Barney virtual pet (defined early so renderToday can always use them) ──
 const _barneyPrevOpen=parseInt(localStorage.getItem("lm.lastOpen")||"0");
@@ -883,7 +926,7 @@ function saveAll(){
   if(state.character)localStorage.setItem(K.character,state.character);
 }
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove("show"),2000);}
-function bandFor(age){if(age==null)return null;const a=Math.min(Math.max(age,1),80);return BANDS.find(b=>a>=b.min&&a<=b.max)||BANDS[BANDS.length-1];}
+function bandFor(age){if(age==null)return null;const a=Math.min(Math.max(age,6),80);return BANDS.find(b=>a>=b.min&&a<=b.max)||BANDS[BANDS.length-1];}
 function bandProgress(b){const d=b.skills.filter(s=>state.done[s.id]).length;return{done:d,total:b.skills.length,pct:Math.round(d/b.skills.length*100)};}
 function level(){const lv=Math.min(Math.floor(state.xp/300),LEVELS.length-1);return{lv,name:LEVELS[lv],into:state.xp-lv*300,next:lv<LEVELS.length-1?300:null};}
 
@@ -1259,23 +1302,26 @@ function renderToday(v){
       <div class="bubble guide">${done
         ?`All 7 done today${state.name?", "+state.name:""}! 🔥 That's a ${state.streak.n}-day streak.`
         :`${state.name?state.name+", ":""}${left} lesson${left>1?"s":""} left today. Tap <b>Got it</b> as you go! 💜`}</div></div>`;
+  // Build each card once, keyed by slot, then emit in the user's interest-led order.
+  const cards={};
   if(d.skill){
     const s=d.skill.skill;
-    html+=moduleBubble("skill",`<div class="title">${s.e} ${s.t}</div>
+    cards.skill=moduleBubble("skill",`<div class="title">${s.e} ${s.t}</div>
       <div class="bodytext">${s.why}</div>
       <ol>${s.steps.map(x=>`<li>${x}</li>`).join("")}</ol>
       <div class="hint">From your life path (${d.skill.band.range}). Checking it here checks it in your Journey too.</div>
       ${s.video?`<a class="btn btn-video" href="${s.video}" target="_blank" rel="noopener">▶ Watch the video lesson</a>`:`<span class="btn btn-video soon">🎬 Video lesson coming soon</span>`}`);
   }
-  html+=moduleBubble("vocab",`<div class="word">${d.vocab.w}</div>
+  cards.vocab=moduleBubble("vocab",`<div class="word">${d.vocab.w}</div>
     <div class="bodytext">${d.vocab.d}</div><div class="ex">"${d.vocab.x}"</div>
     <div class="hint">Use it once in a real sentence today and it's yours forever.</div>`);
-  html+=moduleBubble("body",`<div class="bodytext">${d.body.f}</div>
+  cards.body=moduleBubble("body",`<div class="bodytext">${d.body.f}</div>
     <div class="hint"><b>Do this:</b> ${d.body.a}</div>`);
-  html+=moduleBubble("money",`<div class="title">${d.money.h}</div><div class="bodytext">${d.money.d}</div>`);
-  html+=moduleBubble("mind",`<div class="title">${d.mind.h}</div><div class="bodytext">${d.mind.d}</div>`);
-  html+=moduleBubble("world",`<div class="title">${d.world.h}</div><div class="bodytext">${d.world.d}</div>`);
-  html+=moduleBubble("challenge",`<div class="title">${d.challenge.c}</div><div class="hint">${d.challenge.y}</div>`);
+  cards.money=moduleBubble("money",`<div class="title">${d.money.h}</div><div class="bodytext">${d.money.d}</div>`);
+  cards.mind=moduleBubble("mind",`<div class="title">${d.mind.h}</div><div class="bodytext">${d.mind.d}</div>`);
+  cards.world=moduleBubble("world",`<div class="title">${d.world.h}</div><div class="bodytext">${d.world.d}</div>`);
+  cards.challenge=moduleBubble("challenge",`<div class="title">${d.challenge.c}</div><div class="hint">${d.challenge.y}</div>`);
+  feedOrder().forEach(slot=>{if(cards[slot])html+=cards[slot];});
   if(done)html+=`<div class="msg guide"><div class="msg-face">${gFace}</div>
     <div class="bubble guide celebrate"><div class="title">🎉 All 7 done!</div>+30 bonus XP banked. A fresh upload lands at midnight. See you tomorrow ✨</div></div>`;
   html+=`</div>`;
@@ -1436,7 +1482,7 @@ function renderMore(v){
       Built for everyone who didn't have a parent or role model to teach them — the kids who grew up without guidance, the parents whose own parents passed too early, everyone who learned life by trial and error. Not anymore. One fresh knowledge pack every day, the full life-skills journey from age 1 to 80, and Life Guides for the moments nobody prepared you for. Everything stays on this device — no account, no tracking. Video lessons are being added skill by skill.<br><br>
       This app shares general life guidance, not medical, legal, or financial advice — for big decisions, talk to a professional (they still exist in 2150).
     </div>`;
-  $("#changeAge").onclick=()=>startOnboard(2);
+  $("#changeAge").onclick=()=>startOnboard(1);
   $("#themeBtn").onclick=()=>{applyTheme(nextTheme());renderMore(v);};
   $("#fontBtn").onclick=()=>{const order=["","fs-lg","fs-xl"];const cur=localStorage.getItem(K.fs)||"";const nx=order[(order.indexOf(cur)+1)%3];localStorage.setItem(K.fs,nx);applyPrefs();renderMore(v);};
   $("#exportBtn").onclick=()=>{
@@ -1459,7 +1505,7 @@ function renderMore(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,interests:[],lifeStage:"",tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
   const lumiOnCk=document.getElementById("lumiOn");
@@ -1523,11 +1569,12 @@ const GOALS=[
   {k:"healing",e:"🌧️",t:"Healing hard times"}
 ];
 let ob={step:0,draft:{}};
-const OB_TOTAL=6;
+const OB_TOTAL=7;
 function startOnboard(step){
   const lc=getLumiCfg();
   ob={step:step||0,draft:{
     name:state.name||"", age:state.age||"", goal:state.goal||"", character:state.character||"elephant",
+    interests:(state.interests||[]).slice(), lifeStage:state.lifeStage||"",
     remOn:lc.on, morning:lc.morning||"08:00", evening:lc.evening||"20:00"
   }};
   $("#overlay").classList.remove("hidden");
@@ -1549,29 +1596,41 @@ function renderOnboard(){
       <div class="ob-nav"><button class="btn btn-got" id="ob-next" style="flex:1;justify-content:center">Let's go →</button></div>`;
   }else if(ob.step===1){
     b.innerHTML=`<div class="ob-emoji">😊</div>
-      <h2>What should I call you?</h2>
-      <p>Just a first name or nickname — so it feels like us, not an app.</p>
+      <h2>First, the basics</h2>
+      <p>What should I call you, and how old are you? Your age tunes the skills that fit your stage.</p>
       <input class="ob-input" id="ob-name" placeholder="Your name" value="${(d.name||"").replace(/"/g,"&quot;")}" maxlength="24" autocomplete="given-name">
+      <input class="ob-input ob-age" id="ob-age" type="number" min="6" max="120" placeholder="Your age" value="${d.age||""}" style="margin-top:4px">
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
       <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===2){
-    b.innerHTML=`<div class="ob-emoji">🎂</div>
-      <h2>${d.name?d.name+", how":"How"} old are you?</h2>
-      <p>This tunes your life path — the skills that matter for your stage right now.</p>
-      <input class="ob-input ob-age" id="ob-age" type="number" min="1" max="120" placeholder="00" value="${d.age||""}">
-      <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>`;
+    b.innerHTML=`<div class="ob-emoji">🧭</div>
+      <h2>${d.name?d.name+", where":"Where"} are you in life right now?</h2>
+      <p>This helps me lead with what matters most to you. Tap one.</p>
+      <div class="opt-grid" id="ob-stages">${LIFE_STAGES.map(s=>`<button class="opt-tile ${d.lifeStage===s.id?"sel":""}" data-stage="${s.id}"><span class="oe">${s.emoji}</span><span>${s.label}</span></button>`).join("")}</div>
+      <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
+      <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===3){
-    const sel=d.character||"elephant";
+    b.innerHTML=`<div class="ob-emoji">✨</div>
+      <h2>What do you most want help with?</h2>
+      <p>Pick your top <b>3</b> — your first pick leads your daily feed. (Tap again to unpick.)</p>
+      <div class="opt-grid" id="ob-interests">${INTERESTS.map(it=>{const r=d.interests.indexOf(it.id);return`<button class="opt-tile ${r>-1?"sel":""}" data-interest="${it.id}"><span class="oe">${it.emoji}</span><span>${it.label}</span>${r>-1?`<span class="opt-rank">${r+1}</span>`:""}</button>`;}).join("")}</div>
+      <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
+      <button class="ob-skip" id="ob-skip">Skip for now</button>`;
+  }else if(ob.step===4){
+    const suggested=(()=>{const f=d.interests[0]?INTERESTS.find(x=>x.id===d.interests[0]):null;return f?f.guide:"elephant";})();
+    if(!d._guideTouched)d.character=suggested;
+    const sel=d.character||suggested;
+    const sg=CHARACTERS.find(x=>x.id===sel);
     b.innerHTML=`<div class="ob-emoji">🤝</div>
-      <h2>Choose your guide</h2>
-      <p>Pick the friend who'll walk with you${d.name?", "+d.name:""}. They'll send your daily lesson, cheer you on, and remind you about your day. Switch anytime.</p>
+      <h2>Meet your guide</h2>
+      <p>${d.interests[0]?`Based on your picks, I think <b>${sg?sg.name:"this one"}</b> is a great match`:"Pick the friend who'll walk with you"}${d.name?", "+d.name:""}. Tap any to switch.</p>
       <div class="char-grid" id="ob-chars">${CHARACTERS.map(ch=>`<button class="char-tile ${sel===ch.id?"sel":""}" data-char="${ch.id}" style="--cc:${ch.color}">
         <span class="ct-face">${charFaceHTML(ch)}</span>
         <span class="ct-name">${ch.name}</span>
         <span class="ct-pillar">${ch.pillar}</span>
       </button>`).join("")}</div>
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>`;
-  }else if(ob.step===4){
+  }else if(ob.step===5){
     b.innerHTML=`<div class="ob-emoji">🔔</div>
       <h2>Want me to check in on you?</h2>
       <p>I'll send a warm nudge tied to that day's lesson. No spam — just you and me.</p>
@@ -1597,26 +1656,41 @@ function renderOnboard(){
   const fin=$("#ob-finish"); if(fin)fin.onclick=obFinish;
   const chars=b.querySelector("#ob-chars");
   if(chars)chars.addEventListener("click",e=>{const t=e.target.closest("[data-char]");if(!t)return;
-    ob.draft.character=t.dataset.char;chars.querySelectorAll(".char-tile").forEach(x=>x.classList.toggle("sel",x===t));});
+    ob.draft.character=t.dataset.char;ob.draft._guideTouched=true;chars.querySelectorAll(".char-tile").forEach(x=>x.classList.toggle("sel",x===t));});
+  const stages=b.querySelector("#ob-stages");
+  if(stages)stages.addEventListener("click",e=>{const t=e.target.closest("[data-stage]");if(!t)return;
+    ob.draft.lifeStage=ob.draft.lifeStage===t.dataset.stage?"":t.dataset.stage;
+    stages.querySelectorAll(".opt-tile").forEach(x=>x.classList.toggle("sel",x===t&&ob.draft.lifeStage));});
+  const ints=b.querySelector("#ob-interests");
+  if(ints)ints.addEventListener("click",e=>{const t=e.target.closest("[data-interest]");if(!t)return;
+    const id=t.dataset.interest, arr=ob.draft.interests, i=arr.indexOf(id);
+    if(i>-1)arr.splice(i,1);
+    else if(arr.length<3)arr.push(id);
+    else{toast("Pick your top 3 — tap one to unpick first.");return;}
+    renderOnboard();});
   const rem=$("#ob-rem");
   if(rem)rem.onchange=()=>{ob.draft.remOn=rem.checked;$("#ob-times").style.cssText=rem.checked?"":"opacity:.4;pointer-events:none";};
   const nameI=$("#ob-name"); if(nameI){nameI.focus();nameI.onkeydown=e=>{if(e.key==="Enter")obNext();};}
   const ageI=$("#ob-age"); if(ageI)ageI.onkeydown=e=>{if(e.key==="Enter")obNext();};
 }
 function captureStep(){
-  if(ob.step===1&&$("#ob-name"))ob.draft.name=$("#ob-name").value.trim();
-  if(ob.step===2&&$("#ob-age"))ob.draft.age=parseInt($("#ob-age").value)||"";
-  if(ob.step===4){if($("#ob-morning"))ob.draft.morning=$("#ob-morning").value;if($("#ob-evening"))ob.draft.evening=$("#ob-evening").value;}
+  if(ob.step===1){
+    if($("#ob-name"))ob.draft.name=$("#ob-name").value.trim();
+    if($("#ob-age"))ob.draft.age=parseInt($("#ob-age").value)||"";
+  }
+  if(ob.step===5){if($("#ob-morning"))ob.draft.morning=$("#ob-morning").value;if($("#ob-evening"))ob.draft.evening=$("#ob-evening").value;}
 }
 function obNext(){
   captureStep();
-  if(ob.step===2){const a=ob.draft.age;if(!a||a<1||a>120){toast("Please enter an age from 1 to 120.");return;}}
+  if(ob.step===1){const a=ob.draft.age;if(a&&(a<6||a>120)){toast("Please enter an age from 6 to 120.");return;}}
   ob.step++; renderOnboard();
 }
 function obFinish(){
   const d=ob.draft;
   state.name=d.name||""; localStorage.setItem(K.name,state.name);
   state.character=d.character||"elephant"; localStorage.setItem(K.character,state.character);
+  state.interests=(d.interests||[]).slice(); localStorage.setItem(K.interests,JSON.stringify(state.interests));
+  state.lifeStage=d.lifeStage||""; localStorage.setItem(K.lifeStage,state.lifeStage);
   const ch=getChar();
   state.goal=ch.goal||""; localStorage.setItem(K.goal,state.goal);
   if(d.age){state.age=d.age;localStorage.setItem(K.age,d.age);}
@@ -2263,6 +2337,7 @@ function renderYou(v){
 
     <div class="band-head" style="margin-top:20px"><h2>⚙️ Settings</h2></div>
     <button class="more-btn" id="changeGuide">🤝 My guide: <b>${getChar().name}</b> <span style="color:var(--muted);font-weight:400">the ${getChar().animal.toLowerCase()} · tap to switch</span></button>
+    <button class="more-btn" id="changeInterests">✨ My interests <span style="color:var(--muted);font-weight:400">${(state.interests&&state.interests.length)?"("+state.interests.map(id=>{const it=INTERESTS.find(x=>x.id===id);return it?it.label:id;}).join(", ")+")":"· tap to set"}</span></button>
     <button class="more-btn" id="changeAge">🎂 My age <span style="color:var(--muted);font-weight:400">(${state.age??"not set"})</span></button>
     <button class="more-btn" id="themeBtn">🎨 Theme: <b>${themeName}</b></button>
     <button class="more-btn" id="fontBtn">🔠 Text size: <b>${({"":"Normal","fs-lg":"Large","fs-xl":"Extra large"})[localStorage.getItem(K.fs)||""]}</b></button>
@@ -2280,8 +2355,9 @@ function renderYou(v){
       <span style="font-size:.78rem">General life guidance only — not medical, legal, or financial advice.</span>
     </div>`;
 
-  $("#changeGuide").onclick=()=>startOnboard(3);
-  $("#changeAge").onclick=()=>startOnboard(2);
+  $("#changeGuide").onclick=()=>startOnboard(4);
+  $("#changeInterests").onclick=()=>startOnboard(3);
+  $("#changeAge").onclick=()=>startOnboard(1);
   $("#themeBtn").onclick=()=>{applyTheme(nextTheme());renderYou(v);};
   $("#fontBtn").onclick=()=>{const order=["","fs-lg","fs-xl"];const cur=localStorage.getItem(K.fs)||"";const nx=order[(order.indexOf(cur)+1)%3];localStorage.setItem(K.fs,nx);applyPrefs();renderYou(v);};
   $("#goSchedule").onclick=()=>{state.tab="schedule";render();window.scrollTo(0,0);};
@@ -2304,7 +2380,7 @@ function renderYou(v){
   };
   $("#resetBtn").onclick=()=>{if(confirm("Erase ALL progress, XP, streaks, and your age? This can't be undone.")){
     Object.values(K).forEach(k=>localStorage.removeItem(k));
-    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,events:[],character:"",tab:"today"};
+    state={...state,age:null,done:{},daily:{},streak:{n:0,last:null},xp:0,events:[],character:"",interests:[],lifeStage:"",tab:"today"};
     applyPrefs();toast("Memory wiped. Fresh start.");render();
   }};
 }

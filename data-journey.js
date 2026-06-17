@@ -1,23 +1,8 @@
 // ============ LIFE JOURNEY CURRICULUM ============
-// 118 skills across 8 age bands. Always APPEND new skills to a band's end
+// Life skills across 7 age bands (ages 6–80). Always APPEND new skills to a band's end
 // so saved checkmarks stay valid (IDs are band + position).
 const BANDS = [
-{id:"b1", name:"The Little Years", range:"Ages 1–4", min:1, max:4, note:"Learned with a grown-up's help", skills:[
- {t:"Say \"please\" and \"thank you\"", e:"🙏", why:"Manners are the first tool for getting along with people.", steps:["Say \"please\" when you ask for something.","Say \"thank you\" when someone gives or helps.","Grown-ups: model it every time — kids copy what they hear."]},
- {t:"Wash hands the right way", e:"🧼", why:"Clean hands stop most everyday germs.", steps:["Wet hands and add soap.","Rub everywhere while singing \"Happy Birthday\" twice.","Rinse and dry with a clean towel."]},
- {t:"Brush teeth (with help)", e:"🪥", why:"Baby teeth guide the adult teeth — they matter.", steps:["Use a tiny smear of toothpaste.","Brush gently in little circles, all sides.","A grown-up finishes the job until about age 7."]},
- {t:"Pick up toys after playing", e:"🧸", why:"Tidying up is the very first habit of taking care of your own stuff.", steps:["Make it a game: race the song to the end.","Everything has a \"home\" — put it back there.","Do it together at first, then they lead."]},
- {t:"Know their first and last name", e:"📛", why:"If they're ever lost, this is the first thing helpers will ask.", steps:["Practice: \"What's your name?\" — full name back.","Turn it into a song or rhythm.","Add the parents' names next."]},
- {t:"Take turns and share", e:"🤝", why:"Sharing is how friendships start.", steps:["Use a timer: \"Your turn until it beeps.\"","Praise the wait, not just the share.","Practice with a grown-up before practicing with friends."]},
- {t:"Stop when they hear safety words", e:"✋", why:"\"Stop!\", \"Hot!\" and \"Wait!\" can prevent the worst accidents.", steps:["Pick 3 family safety words and use them only for danger.","Play \"red light, green light\" to train fast stopping.","Praise instantly every time they freeze on the word."]},
- {t:"Use an indoor voice", e:"🤫", why:"Volume control is the start of reading the room.", steps:["Show the difference: whisper, talk, shout.","Practice: \"Show me your library voice.\"","Gently remind, don't shout the reminder."]},
- {t:"Get dressed (mostly) alone", e:"👕", why:"Dressing builds independence and motor skills.", steps:["Start with easy wins: elastic pants, velcro shoes.","Lay clothes out in order, left to right.","Allow extra time — slow is okay."]},
- {t:"Use the potty", e:"🚽", why:"The biggest independence milestone of the little years.", steps:["Watch for readiness signs (dry naps, telling you).","Keep a relaxed routine: try after meals.","Celebrate tries, never punish accidents."]},
- {t:"Say sorry", e:"💗", why:"A real \"sorry\" repairs little hurts before they grow.", steps:["Keep it simple: \"Sorry I bumped you.\"","Add a fix: a hug, returning the toy.","Grown-ups: apologize to kids too — it teaches more than any lecture."]},
- {t:"Be gentle with pets and babies", e:"🐶", why:"Gentleness keeps everyone safe and teaches empathy.", steps:["Show \"one-finger soft touches\" first.","Always with a grown-up next to them.","Teach the warning signs: a growl means give space."]},
- {t:"Listen while someone else talks", e:"👂", why:"Waiting for your turn to speak is the seed of every conversation skill.", steps:["Practice \"eyes on the speaker\" at story time.","Use a talking object: only the holder talks.","Keep it short — little kids can wait seconds, not minutes."]},
-]},
-{id:"b2", name:"Big Kid Basics", range:"Ages 5–8", min:5, max:8, note:"Learning to do real things alone", skills:[
+{id:"b2", name:"Big Kid Basics", range:"Ages 6–8", min:6, max:8, note:"Learning to do real things alone", skills:[
  {t:"Tie shoelaces", e:"👟", why:"A classic first \"I did it myself\" skill.", steps:["Make an X and tuck one lace under — pull tight.","Make a bunny-ear loop with each lace.","Cross the ears, tuck one through the hole, pull."]},
  {t:"Know their address and a parent's phone number", e:"🏠", why:"If they're ever separated from you, this gets them home.", steps:["Turn the address into a chant or song.","Practice the phone number on a real keypad.","Quiz them in the car until it's automatic."]},
  {t:"Ride a bike", e:"🚲", why:"Freedom, exercise, and confidence in one skill.", steps:["Start with the pedals off — scoot and balance.","Add pedals once they can glide with feet up.","Helmet every single time, no exceptions."]},
