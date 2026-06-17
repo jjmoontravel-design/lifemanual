@@ -888,10 +888,13 @@ function companionMsg(mood){
 }
 // Companion clip: the two starter guides (Barney/bear, Penny/bunny) have full mood clips;
 // every other guide uses its single idle clip.
+// NOTE: the "excited" clips have a soft glow halo that can't be cleanly keyed yet — until those
+// are reprocessed, fall back to the clean "idle" clip for the celebration (the app fires its own confetti).
 function companionImg(mood){
   const c=getChar();
-  if(c.id==="bear") return {webp:`barney-${mood}.webp`, fallback:`barney-${mood}.png`};
-  if(c.id==="bunny") return {webp:`bunny-${mood}.webp`, fallback:`characters/bunny.jpg`};
+  const m=(mood==="excited")?"idle":mood;
+  if(c.id==="bear") return {webp:`barney-${m}.webp`, fallback:`barney-${m}.png`};
+  if(c.id==="bunny") return {webp:`bunny-${m}.webp`, fallback:`characters/bunny.jpg`};
   return {webp:`characters/${c.id}-idle.webp`, fallback:`characters/${c.id}.jpg`};
 }
 const CAT={
