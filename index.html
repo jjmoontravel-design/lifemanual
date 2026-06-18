@@ -855,7 +855,7 @@ async function testPush(){
     const d=await r.json();
     if(d.ok)toast("Test sent! Lock your screen and watch for it 🔔");
     else toast("Could not send: "+(d.error||"unknown error"));
-  }catch(e){toast("Network error — check your connection.");}
+  }catch(e){toast("Err: "+String(e&&e.message||e));}
 }
 async function syncEventsToWorker(){
   const sub=await getPushSubscription();
