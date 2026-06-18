@@ -833,7 +833,7 @@ async function syncEventsToWorker(){
   const sub=await getPushSubscription();
   if(!sub)return;
   fetch(AI_WORKER_URL+"/push/events",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({userId:getPushUserId(),events:state.events})}).catch(()=>{});
+    body:JSON.stringify({userId:getPushUserId(),events:state.events,tzOffset:new Date().getTimezoneOffset()})}).catch(()=>{});
 }
 
 const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet"};
