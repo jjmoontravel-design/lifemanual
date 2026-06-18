@@ -601,6 +601,7 @@
   /* === LUMI BUBBLE === */
   #lumi{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 24px));z-index:45;display:flex;align-items:flex-end;gap:10px;animation:lumiIn .4s cubic-bezier(.2,.8,.2,1) both}
   @keyframes lumiIn{from{opacity:0;transform:translateX(-50%) translateY(32px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  @keyframes balloonFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
   .lumi-face{flex:none;width:64px;height:64px;border-radius:50%;background:#fff;border:2px solid rgba(167,139,250,.5);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 24px rgba(167,139,250,.35);overflow:hidden}
   .lumi-face img{width:100%;height:100%;object-fit:contain}
   .lumi-speech{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px 18px 18px 4px;padding:13px 15px;box-shadow:0 10px 32px rgba(0,0,0,.5),0 0 22px rgba(99,102,241,.1);position:relative}
@@ -3073,6 +3074,7 @@ if(window.visualViewport){
     <div style="position:relative">
       <video id="alarm-vid" src="bunny-knock.mp4" playsinline preload="auto"></video>
       <button id="alarm-unmute" onclick="alarmUnmute()" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:999px;padding:6px 13px;font-size:.82rem;font-weight:700;cursor:pointer;display:none">🔇 Tap for sound</button>
+      <div style="position:absolute;bottom:6px;right:6px;font-size:1.9rem;line-height:1;animation:balloonFloat 2.4s ease-in-out infinite;pointer-events:none">🎈</div>
     </div>
     <div class="alarm-body">
       <div id="alarm-emoji" class="alarm-emoji">📅</div>
