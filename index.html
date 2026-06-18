@@ -1006,7 +1006,8 @@ function companionImg(mood){
 function companionWave(){
   const c=getChar();
   if(c.id==="bunny") return {webp:`bunny-wave.webp?v=2`, fallback:`characters/bunny.jpg`, ms:6100};
-  return null; // no wave clip for this character yet
+  if(c.id==="bear")  return {webp:`barney-wave.webp?v=2`, fallback:`barney-idle.png`, ms:8100};
+  return null;
 }
 const CAT={
   foryou:{label:"For you",icon:"✨",color:"#c084fc"},
