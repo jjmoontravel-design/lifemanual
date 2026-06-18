@@ -2970,6 +2970,8 @@ function showAlarmPopup(emoji, title, msg) {
   const charId = getChar()?.id || "bunny";
   const knockSrc = (charId === "bear") ? "bear-knock.mp4" : "bunny-knock.mp4";
   if (vid.dataset.src !== knockSrc) { vid.src = knockSrc; vid.dataset.src = knockSrc; }
+  const sticker = document.getElementById("alarm-sticker");
+  if (sticker) sticker.textContent = charId === "bear" ? "🍯" : "🌸";
   const unmuteBtn = document.getElementById("alarm-unmute");
   vid.currentTime = 0;
   vid.muted = false;
@@ -3074,7 +3076,7 @@ if(window.visualViewport){
     <div style="position:relative">
       <video id="alarm-vid" src="bunny-knock.mp4" playsinline preload="auto"></video>
       <button id="alarm-unmute" onclick="alarmUnmute()" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:999px;padding:6px 13px;font-size:.82rem;font-weight:700;cursor:pointer;display:none">🔇 Tap for sound</button>
-      <div style="position:absolute;bottom:6px;right:6px;font-size:1.9rem;line-height:1;animation:balloonFloat 2.4s ease-in-out infinite;pointer-events:none">🎈</div>
+      <div id="alarm-sticker" style="position:absolute;bottom:6px;right:6px;font-size:1.9rem;line-height:1;animation:balloonFloat 2.4s ease-in-out infinite;pointer-events:none">🌸</div>
     </div>
     <div class="alarm-body">
       <div id="alarm-emoji" class="alarm-emoji">📅</div>
