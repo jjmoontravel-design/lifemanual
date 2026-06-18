@@ -199,7 +199,7 @@
   .alarm-overlay.show{opacity:1;visibility:visible;pointer-events:auto}
   .alarm-card{background:var(--card);border:1px solid var(--line);border-radius:28px;max-width:360px;width:100%;text-align:center;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.8);transform:scale(.88) translateY(30px);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
   .alarm-overlay.show .alarm-card{transform:scale(1) translateY(0)}
-  .alarm-card .knock-anim{display:block;width:100%;max-height:280px;object-fit:contain;border-radius:18px 18px 0 0}
+  .alarm-card video{width:112%;margin-left:-6%;display:block;max-height:300px;object-fit:cover}
   .alarm-body{padding:18px 24px 26px}
   .alarm-emoji{font-size:2.6rem;line-height:1;margin-bottom:6px}
   .alarm-title{font-size:1.3rem;font-weight:800;margin:0 0 5px}
@@ -2956,43 +2956,49 @@ function _unlockAudio(){
 document.addEventListener("click",_unlockAudio,{passive:true});
 document.addEventListener("touchstart",_unlockAudio,{passive:true});
 
-// ── Alarm popup (character knock animation) ────────────────────────────────
+// ── Alarm popup (bunny knock video) ────────────────────────────────────────
 let _alarmDismissTimer = null;
 function showAlarmPopup(emoji, title, msg) {
   const overlay = document.getElementById("alarm-overlay");
-  const img = document.getElementById("alarm-img");
-  const aud = document.getElementById("alarm-audio");
-  if (!overlay || !img) return;
+  const vid = document.getElementById("alarm-vid");
+  if (!overlay || !vid) return;
   document.getElementById("alarm-emoji").textContent = emoji || "📅";
   document.getElementById("alarm-title").textContent = title || "Event Reminder";
   document.getElementById("alarm-msg").textContent = msg || "It's time!";
+  // Use the current guide's knock video if it exists, fall back to bunny
   const charId = getChar()?.id || "bunny";
-  img.src = charId === "bear" ? "bear-knock.webp" : "bunny-knock.webp";
+  const knockSrc = (charId === "bear") ? "bear-knock.mp4" : "bunny-knock.mp4";
+  if (vid.dataset.src !== knockSrc) { vid.src = knockSrc; vid.dataset.src = knockSrc; }
   const unmuteBtn = document.getElementById("alarm-unmute");
-  if (aud) {
-    aud.src = charId === "bear" ? "bear-knock.m4a" : "bunny-knock.m4a";
-    aud.currentTime = 0;
-    aud.play().catch(() => { if (unmuteBtn) unmuteBtn.style.display = "block"; });
-  }
+  vid.currentTime = 0;
+  vid.muted = false;
+  vid.play().catch(() => {
+    vid.muted = true;
+    vid.play().catch(() => {});
+    if (unmuteBtn) unmuteBtn.style.display = "block";
+  });
   if (unmuteBtn) unmuteBtn.style.display = "none";
   overlay.classList.add("show");
   if (_alarmDismissTimer) clearTimeout(_alarmDismissTimer);
-  // Animation is ~6 s; auto-dismiss after 9 s (6 + 3 buffer)
-  _alarmDismissTimer = setTimeout(dismissAlarmPopup, 9000);
+  vid.onended = () => { _alarmDismissTimer = setTimeout(dismissAlarmPopup, 3000); };
+  _alarmDismissTimer = setTimeout(dismissAlarmPopup, 60000);
 }
 function dismissAlarmPopup() {
   if (_alarmDismissTimer) { clearTimeout(_alarmDismissTimer); _alarmDismissTimer = null; }
   const overlay = document.getElementById("alarm-overlay");
-  const aud = document.getElementById("alarm-audio");
+  const vid = document.getElementById("alarm-vid");
   if (overlay) overlay.classList.remove("show");
-  if (aud) { aud.pause(); aud.currentTime = 0; }
+  if (vid) { vid.pause(); vid.currentTime = 0; }
   playChime();
   state.tab = "schedule"; render(); window.scrollTo(0,0);
 }
 function alarmUnmute() {
-  const aud = document.getElementById("alarm-audio");
+  const vid = document.getElementById("alarm-vid");
   const btn = document.getElementById("alarm-unmute");
-  if (aud) { aud.currentTime = 0; aud.play().catch(() => {}); }
+  if (!vid) return;
+  vid.muted = false;
+  vid.currentTime = 0;
+  vid.play().catch(() => {});
   if (btn) btn.style.display = "none";
 }
 
@@ -3065,8 +3071,7 @@ if(window.visualViewport){
 <div class="alarm-overlay" id="alarm-overlay" role="alertdialog" aria-modal="true">
   <div class="alarm-card">
     <div style="position:relative">
-      <img id="alarm-img" class="knock-anim" src="bunny-knock.webp" alt="">
-      <audio id="alarm-audio" preload="auto" style="display:none"></audio>
+      <video id="alarm-vid" src="bunny-knock.mp4" playsinline preload="auto"></video>
       <button id="alarm-unmute" onclick="alarmUnmute()" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:999px;padding:6px 13px;font-size:.82rem;font-weight:700;cursor:pointer;display:none">🔇 Tap for sound</button>
     </div>
     <div class="alarm-body">
