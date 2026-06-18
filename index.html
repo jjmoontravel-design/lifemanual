@@ -400,12 +400,25 @@
   .store-badge.cur{background:#34d39922;color:#34d399;border:1px solid #34d39944}
   .store-sub{width:100%;margin:18px 0 10px;padding:14px;border-radius:14px;border:1px dashed #c084fc66;background:#c084fc14;color:#c084fc;font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer}
   .store-note{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.5}
-  /* VIRTUAL PET STATS + CARE */
-  .pet-stats{display:flex;gap:8px;max-width:300px;margin:6px auto 0}
-  .pet-stat{flex:1;display:flex;align-items:center;gap:4px}
-  .pet-stat>span{font-size:.95rem;flex:none}
-  .pet-bar{flex:1;height:8px;border-radius:5px;background:var(--card2);overflow:hidden;border:1px solid var(--line)}
-  .pet-bar i{display:block;height:100%;border-radius:5px;transition:width .5s ease}
+  /* === CHARACTER SHOWCASE (Today) === */
+  .char-showcase{position:relative;overflow:hidden;border-radius:26px;background:var(--card);border:1px solid var(--line);margin:12px 0;padding:24px 16px 18px;text-align:center}
+  .char-showcase::before{content:"";position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:220px;background:radial-gradient(circle,rgba(167,139,250,.1) 0%,transparent 70%);pointer-events:none}
+  .char-name{font-weight:800;font-size:1.08rem;margin:8px 0 3px;color:var(--ink);letter-spacing:.01em}
+  .char-mood-status{font-size:.82rem;color:var(--muted);margin-bottom:16px;min-height:1.2em}
+  .char-mini-stats{display:flex;gap:12px;max-width:240px;margin:0 auto 14px}
+  .char-mini-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .char-mini-stat span{font-size:.88rem;line-height:1}
+  .char-mini-bar{width:100%;height:4px;border-radius:3px;background:var(--line);overflow:hidden}
+  .char-mini-bar i{display:block;height:100%;border-radius:3px;transition:width .6s ease}
+  .char-care-ghost{background:none;border:1.5px solid var(--line);border-radius:999px;padding:7px 22px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .18s;margin-bottom:16px;display:inline-block}
+  .char-care-ghost:active{transform:scale(.94);border-color:#a78bfa;color:#a78bfa}
+  .mood-dots{display:flex;justify-content:center;gap:9px}
+  .mood-dot{width:38px;height:38px;border-radius:50%;background:var(--card2);border:1.5px solid var(--line);font-size:1.1rem;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;font-family:inherit}
+  .mood-dot.sel{border-color:#a78bfa;background:rgba(167,139,250,.18);box-shadow:0 0 0 3px rgba(167,139,250,.2)}
+  .mood-dot:active{transform:scale(.86)}
+  /* legacy pet bars still used in care modal */
+  .pet-bar{height:11px;border-radius:6px;background:var(--card2);overflow:hidden;border:1px solid var(--line);flex:1}
+  .pet-bar i{display:block;height:100%;border-radius:6px;transition:width .5s ease}
   .pet-care-btn{margin:12px auto 0;display:block;background:linear-gradient(120deg,#a78bfa,#22d3ee);color:#fff;border:none;border-radius:14px;padding:11px 24px;font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.35)}
   .pet-care-btn:active{transform:scale(.96)}
   .care-statrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -1447,27 +1460,22 @@ function renderToday(v){
     <div class="today-progress-pill">${n}<span>/${SLOTS.length}</span></div>
   </div>
   <div class="today-streak-row">🔥 ${state.streak.n}-day streak &nbsp;·&nbsp; 🪙 ${state.coins} coins</div>
-  ${(()=>{decayPet();const _m=barneyMood(),_c=gotCount(),_msg=companionMsg(),_img=companionImg(_m),nm=getChar().name;
-  const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
-  const MOODS=[["idle","💜 Chill"],["happy","😊 Happy"],["excited","🤩 Excited"],["hungry","🍎 Hungry"],["sleep","😴 Sleepy"]];
-  const MOOD_LABEL={idle:"Chillin'",happy:"Happy",excited:"Excited!",hungry:"Hungry",sleep:"Sleeping"};
+  ${(()=>{decayPet();const _m=barneyMood(),_c=gotCount(),_img=companionImg(_m),nm=getChar().name;
+  const MOOD_STATUS={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"};
+  const MOOD_DOTS=[["idle","💜"],["happy","😊"],["excited","🤩"],["hungry","🍎"],["sleep","😴"]];
   const awayMs=state.lastSeen?Date.now()-state.lastSeen:0;
   const wasAsleep=awayMs>3*60*60*1000;
   const startImg=wasAsleep?companionImg("sleep"):_img;
-  return`<div style="text-align:center;padding:4px 16px 4px">
+  const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
+  return`<div class="char-showcase">
     <div class="char-stage" id="charStage" data-actual-mood="${_m}" data-actual-webp="${_img.webp}" data-actual-fb="${_img.fallback}" data-was-asleep="${wasAsleep?1:0}" data-char-name="${nm}">
-      <div class="char-aura char-aura-${_m}"></div>
       <img src="${startImg.webp}" id="charPetImg" class="char-pet-img" alt="${nm}" onerror="this.onerror=null;this.src='${startImg.fallback}'">
     </div>
-    <div style="font-size:.7rem;color:var(--muted);margin:8px 0 5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">${wasAsleep?"😴 Waking up…":`Currently — ${MOOD_LABEL[_m]}`} &nbsp;·&nbsp; <span style="color:#a78bfa;font-weight:600;text-transform:none">tap to preview</span></div>
-    <div class="mood-row" id="moodRow">${MOODS.map(([m,lbl])=>{const mi=companionImg(m);return`<button class="mood-btn${m===_m&&!wasAsleep?" sel":""}" data-mood="${m}" data-webp="${mi.webp}" data-fb="${mi.fallback}">${lbl}</button>`;}).join("")}</div>
-    <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:9px 14px;font-size:.84rem;line-height:1.45;margin:10px auto 10px;max-width:260px">${_msg}</div>
-    <div class="pet-stats">${stats.map(s=>`<div class="pet-stat"><span>${s[1]}</span><div class="pet-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
-    <button class="pet-care-btn" data-care="1">🛒 Care for ${nm}</button>
-    <div style="max-width:220px;margin:12px auto 0">
-      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>✨ Today's lessons</span><span>${_c}/7</span></div>
-      <div class="bar" style="margin:0;height:7px"><i style="width:${Math.round(_c/7*100)}%"></i></div>
-    </div>
+    <div class="char-name">${nm}</div>
+    <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
+    <div class="char-mini-stats">${stats.map(s=>`<div class="char-mini-stat"><span>${s[1]}</span><div class="char-mini-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
+    <button class="char-care-ghost" data-care="1">Care for ${nm}</button>
+    <div class="mood-dots" id="moodRow">${MOOD_DOTS.map(([m,e])=>{const mi=companionImg(m);return`<button class="mood-dot${m===_m&&!wasAsleep?" sel":""}" data-mood="${m}" data-webp="${mi.webp}" data-fb="${mi.fallback}">${e}</button>`;}).join("")}</div>
   </div>`})()}
   <div class="chat-thread">
     <div class="msg guide"><div class="msg-face">${gFace}</div>
@@ -1524,7 +1532,7 @@ function renderToday(v){
       _petImg.classList.add("char-wake");
       _petImg.addEventListener("animationend",()=>_petImg.classList.remove("char-wake"),{once:true});
       if(_moodRow) _moodRow.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.dataset.mood===_am));
-      const lbl=document.querySelector("[data-mood-lbl]"); if(lbl)lbl.textContent="Currently — "+{idle:"Chillin'",happy:"Happy",excited:"Excited!",hungry:"Hungry",sleep:"Sleeping"}[_am];
+      const lbl=document.querySelector("[data-mood-lbl]"); if(lbl)lbl.textContent={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"}[_am]||"";
       toast(`${_nm} wakes up! 👋`);
     },1200);
   }
