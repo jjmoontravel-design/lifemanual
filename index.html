@@ -235,6 +235,10 @@
   /* ===== CHARACTER STAGE — Today screen ===== */
   .char-stage{position:relative;width:200px;height:200px;margin:16px auto 0;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   .char-aura{display:none}
+  .mood-row{display:flex;justify-content:center;gap:7px;margin:10px 0 2px;flex-wrap:wrap}
+  .mood-btn{background:var(--card2);border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit;color:var(--muted)}
+  .mood-btn.sel{border-color:#a78bfa;background:rgba(167,139,250,.15);color:#a78bfa}
+  .mood-btn:active{transform:scale(.9)}
   .char-pet-img{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;animation:charFloat 2.8s ease-in-out infinite;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));z-index:1;transform-origin:center bottom}
   @keyframes charFloat{0%,100%{transform:translateY(0) rotate(-1deg) scale(1)}40%{transform:translateY(-16px) rotate(.7deg) scale(1.03)}72%{transform:translateY(-6px) rotate(1.2deg) scale(1.01)}}
   .char-pet-img.char-tap{animation:charTap .65s cubic-bezier(.34,1.56,.64,1)!important}
@@ -1442,11 +1446,13 @@ function renderToday(v){
   <div class="today-streak-row">🔥 ${state.streak.n}-day streak &nbsp;·&nbsp; 🪙 ${state.coins} coins</div>
   ${(()=>{decayPet();const _m=barneyMood(),_c=gotCount(),_msg=companionMsg(),_img=companionImg(_m),nm=getChar().name;
   const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
+  const MOODS=[["idle","💜 Chill"],["happy","😊 Happy"],["excited","🤩 Excited"],["hungry","🍎 Hungry"],["sleep","😴 Sleepy"]];
   return`<div style="text-align:center;padding:4px 16px 4px">
-    <div class="char-stage" id="charStage">
+    <div class="char-stage" id="charStage" data-actual-mood="${_m}" data-actual-webp="${_img.webp}" data-actual-fb="${_img.fallback}">
       <div class="char-aura char-aura-${_m}"></div>
       <img src="${_img.webp}" id="charPetImg" class="char-pet-img" alt="${nm}" onerror="this.onerror=null;this.src='${_img.fallback}'">
     </div>
+    <div class="mood-row" id="moodRow">${MOODS.map(([m,lbl])=>{const mi=companionImg(m);return`<button class="mood-btn${m===_m?" sel":""}" data-mood="${m}" data-webp="${mi.webp}" data-fb="${mi.fallback}">${lbl}</button>`;}).join("")}</div>
     <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:9px 14px;font-size:.84rem;line-height:1.45;margin:10px auto 10px;max-width:260px">${_msg}</div>
     <div class="pet-stats">${stats.map(s=>`<div class="pet-stat"><span>${s[1]}</span><div class="pet-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
     <button class="pet-care-btn" data-care="1">🛒 Care for ${nm}</button>
@@ -1494,13 +1500,32 @@ function renderToday(v){
   applyMood();
   startProactiveTimer();
   // Tap character for a bounce reaction
-  const _stage=$("#charStage"),_petImg=$("#charPetImg");
+  const _stage=$("#charStage"),_petImg=$("#charPetImg"),_moodRow=$("#moodRow");
   if(_stage&&_petImg){
     _stage.addEventListener("click",()=>{
       _petImg.classList.remove("char-tap");
       void _petImg.offsetWidth;
       _petImg.classList.add("char-tap");
       _petImg.addEventListener("animationend",()=>_petImg.classList.remove("char-tap"),{once:true});
+    });
+  }
+  if(_moodRow&&_petImg&&_stage){
+    let _revert=null;
+    _moodRow.addEventListener("click",e=>{
+      const btn=e.target.closest("[data-mood]"); if(!btn)return;
+      e.stopPropagation();
+      _moodRow.querySelectorAll(".mood-btn").forEach(b=>b.classList.remove("sel"));
+      btn.classList.add("sel");
+      _petImg.src=btn.dataset.webp;
+      _petImg.onerror=()=>{_petImg.onerror=null;_petImg.src=btn.dataset.fb;};
+      _petImg.classList.remove("char-tap"); void _petImg.offsetWidth; _petImg.classList.add("char-tap");
+      _petImg.addEventListener("animationend",()=>_petImg.classList.remove("char-tap"),{once:true});
+      clearTimeout(_revert);
+      _revert=setTimeout(()=>{
+        const aw=_stage.dataset.actualWebp,af=_stage.dataset.actualFb,am=_stage.dataset.actualMood;
+        _petImg.src=aw; _petImg.onerror=()=>{_petImg.onerror=null;_petImg.src=af;};
+        _moodRow.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.dataset.mood===am));
+      },5000);
     });
   }
 }
