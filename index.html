@@ -1458,7 +1458,7 @@ function renderToday(v){
   ${(()=>{decayPet();const _m=barneyMood(),_c=gotCount(),_img=companionImg(_m),nm=getChar().name;
   const MOOD_STATUS={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"};
   const awayMs=state.lastSeen?Date.now()-state.lastSeen:0;
-  const wasAsleep=awayMs>3*60*60*1000;
+  const wasAsleep=awayMs>1*60*60*1000;
   const startImg=wasAsleep?companionImg("sleep"):_img;
   const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
   return`<div class="char-showcase">
