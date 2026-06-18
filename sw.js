@@ -1,4 +1,4 @@
-const CACHE = "lifemanual-v89";
+const CACHE = "lifemanual-v90";
 const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-interests.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png", "barney-happy.webp", "barney-hungry.webp", "barney-sleep.webp", "barney-excited.webp", "barney-idle.webp", "bunny-happy.webp", "bunny-hungry.webp", "bunny-sleep.webp", "bunny-idle.webp", "bunny-excited.webp", "bunny-knock.mp4", "bear-knock.mp4"];
 
 self.addEventListener("install", e => {
@@ -56,6 +56,22 @@ self.addEventListener("message", e => {
   if (d.type === "CLEAR_ALARM") {
     if (_alarms.has(d.id)) { clearTimeout(_alarms.get(d.id)); _alarms.delete(d.id); }
   }
+});
+
+// Incoming push from Cloudflare — display it as a notification
+self.addEventListener("push", e => {
+  let payload = {};
+  try { payload = e.data ? e.data.json() : {}; } catch(err) {}
+  e.waitUntil(
+    self.registration.showNotification(payload.title || "📅 Life Manual", {
+      body: payload.body || "You have an upcoming event!",
+      icon: payload.icon || "icon-192.png",
+      badge: "icon-192.png",
+      requireInteraction: true,
+      tag: "lm-push",
+      data: payload.data || { tab: "schedule" },
+    })
+  );
 });
 
 // Tapping a notification opens the app on the Schedule tab
