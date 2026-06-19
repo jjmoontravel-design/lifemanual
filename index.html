@@ -274,6 +274,7 @@
   .mood-btn.sel{border-color:#a78bfa;background:rgba(167,139,250,.15);color:#a78bfa}
   .mood-btn:active{transform:scale(.9)}
   .char-pet-img{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));z-index:1;transform-origin:center bottom;will-change:transform;backface-visibility:hidden}
+  .char-pet-img.mood-idle{transform:scale(.82)}
   .char-pet-img.char-tap{animation:charTap .65s cubic-bezier(.34,1.56,.64,1)!important}
   @keyframes charTap{0%{transform:scale(1) translateY(0) rotate(0)}28%{transform:scale(1.12) translateY(-10px) rotate(-4deg)}55%{transform:scale(.95) translateY(3px) rotate(3deg)}78%{transform:scale(1.05) translateY(-4px) rotate(-1deg)}100%{transform:scale(1) translateY(0) rotate(0)}}
   .char-pet-img.char-wake{animation:charWake 1.8s cubic-bezier(.34,1.56,.64,1)!important}
@@ -1284,9 +1285,10 @@ function feedOrder(){
   return order;
 }
 
-// ── Virtual pet: 4 care stats with gentle real-time decay ──
+// ── Virtual pet: 4 care stats with real-time decay ──
+// Decay rates: hunger fastest (player notices), energy next, clean/happy slower
 const PET_STATS=["hunger","clean","happy","energy"];
-const PET_DECAY=0.5; // points/hour per stat (gentle ≈ 12/day)
+const PET_DECAY={hunger:7,energy:5,clean:3,happy:4}; // pts/hr — hungry after ~7h, sleepy after ~11h
 function ensurePet(){
   if(!state.pet||typeof state.pet!=="object")state.pet={hunger:80,clean:80,happy:80,energy:90,t:Date.now()};
 }
@@ -1294,7 +1296,7 @@ function decayPet(){
   ensurePet();
   const now=Date.now(), hrs=Math.max(0,(now-(state.pet.t||now))/3600000);
   if(hrs>0){
-    PET_STATS.forEach(k=>{state.pet[k]=Math.max(0,Math.min(100,(state.pet[k]==null?80:state.pet[k])-PET_DECAY*hrs));});
+    PET_STATS.forEach(k=>{state.pet[k]=Math.max(0,Math.min(100,(state.pet[k]==null?80:state.pet[k])-(PET_DECAY[k]||5)*hrs));});
     state.pet.t=now;
   }
 }
@@ -1804,7 +1806,7 @@ function renderToday(v){
   const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
   return`<div class="char-showcase">
     <div class="char-stage" id="charStage" data-actual-mood="${_m}" data-actual-webp="${_img.webp}" data-actual-fb="${_img.fallback}" data-was-asleep="${wasAsleep?1:0}" data-char-name="${nm}">
-      <img src="${startImg.webp}" id="charPetImg" class="char-pet-img" alt="${nm}" onerror="this.onerror=null;this.src='${startImg.fallback}'">
+      <img src="${startImg.webp}" id="charPetImg" class="char-pet-img mood-${wasAsleep?"sleep":_m}" alt="${nm}" onerror="this.onerror=null;this.src='${startImg.fallback}'">
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
@@ -1868,6 +1870,7 @@ function renderToday(v){
     const ci=companionImg(m);
     img.src=ci.webp;
     img.onerror=()=>{img.onerror=null;img.src=ci.fallback;};
+    ["idle","happy","excited","hungry","sleep"].forEach(x=>img.classList.toggle("mood-"+x,x===m));
     const lbl=document.querySelector("[data-mood-lbl]");
     if(lbl)lbl.textContent=MOOD_STATUS_MAP[m]||"";
     document.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.textContent.toLowerCase().includes(m)));

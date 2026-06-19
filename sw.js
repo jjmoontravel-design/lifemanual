@@ -1,4 +1,4 @@
-const CACHE = "lifemanual-v128";
+const CACHE = "lifemanual-v129";
 const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-interests.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png", "barney-happy.webp", "barney-hungry.webp", "barney-sleep.webp", "barney-excited.webp", "barney-idle.webp", "bunny-happy.webp", "bunny-hungry.webp", "bunny-sleep.webp", "bunny-idle.webp", "bunny-excited.webp", "bunny-wave.webp", "barney-wave.webp", "bunny-knock.mp4", "bear-knock.mp4", "dolphin-new.mp4"];
 
 self.addEventListener("install", e => {
