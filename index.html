@@ -38,7 +38,7 @@
     background-size: 100% 100%;
   }
   html.kawaii{
-    --bg:#fff0f8; --card:#ffffff; --card2:#fde8f4; --ink:#3d1a2e; --muted:#b07090;
+    --bg:#fff0f8; --card:#ffffff; --card2:#fde8f4; --ink:#3d1a2e; --muted:#7a2650;
     --line:#f5c6e0; --glow:#f472b6; --cyan:#fb7185; --good:#34d399; --good-deep:#052016;
     --grad:linear-gradient(120deg,#f472b6,#fb923c);
     --radius:26px;
@@ -183,7 +183,7 @@
   .bubble.sweeping .sweep{animation:cardSweep .5s ease forwards}
   /* ── Theme-flavoured guide bubbles ─────────────────────────────────────── */
   html.light  .bubble.guide{background:#fff;border:1px solid #d8dff5;border-left:3px solid var(--sc,#4f46e5);box-shadow:0 4px 18px rgba(99,102,241,.09)}
-  html.kawaii .bubble.guide{background:linear-gradient(135deg,#fff0f6,#f3e5ff);border:1.5px solid rgba(244,143,177,.45);border-left:4px solid var(--sc,#ec4899);border-radius:20px 20px 20px 4px}
+  html.kawaii .bubble.guide{background:rgba(255,255,255,.97);border:1.5px solid rgba(244,143,177,.45);border-left:4px solid var(--sc,#ec4899);border-radius:20px 20px 20px 4px}
   html.ocean  .bubble.guide{background:linear-gradient(135deg,rgba(8,145,178,.12),rgba(6,78,112,.18));border:1px solid rgba(34,211,238,.22);border-left:3px solid var(--sc,#22d3ee);box-shadow:0 4px 22px rgba(34,211,238,.08)}
   html.forest .bubble.guide{background:linear-gradient(135deg,rgba(22,101,52,.22),rgba(5,46,22,.28));border:1px solid rgba(74,222,128,.2);border-left:3px solid var(--sc,#4ade80)}
   html.galaxy .bubble.guide{background:linear-gradient(135deg,rgba(109,40,217,.18),rgba(10,6,24,.55));border:1px solid rgba(167,139,250,.22);border-left:3px solid var(--sc,#a78bfa);box-shadow:0 0 22px rgba(167,139,250,.12),inset 0 0 28px rgba(109,40,217,.07)}
@@ -621,6 +621,11 @@
   html.kawaii .sc-sky{background:url('kawaii-sched.jpg') center/cover no-repeat;filter:brightness(.55)}
   html.kawaii .sc-cloud{background:radial-gradient(closest-side,rgba(255,255,255,.92),transparent);filter:blur(6px);width:300px;height:72px}
   html.kawaii .orb{background:radial-gradient(circle at 35% 35%,rgba(240,98,146,.38),transparent 70%)}
+  /* Kawaii readability: floating labels & cards need solid backgrounds over bright images */
+  html.kawaii .card{background:rgba(255,255,255,.97)}
+  html.kawaii .ev-section-head,html.kawaii .ev-bank-head{background:rgba(255,255,255,.88);border-radius:999px;padding:4px 12px;display:inline-flex;align-items:center;gap:6px}
+  html.kawaii .section-note{background:rgba(255,255,255,.82);border-radius:12px;padding:6px 12px;color:#7a2650}
+  html.kawaii main > *:not(.card):not([class*="bubble"]):not([class*="char"]) > [style*="color:var(--muted)"]{color:#7a2650 !important}
   /* You → soft sparkly dream in rose & lavender */
   html.kawaii .y-sky{background:url('kawaii-you.jpg') center/cover no-repeat;filter:brightness(.88)}
   html.kawaii .y-neb1{background:radial-gradient(circle,rgba(255,182,193,.58),transparent 66%)}
