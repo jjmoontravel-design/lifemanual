@@ -275,6 +275,8 @@
   .mood-btn:active{transform:scale(.9)}
   .char-pet-img{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));z-index:1;transform-origin:center bottom;will-change:transform;backface-visibility:hidden}
   .char-pet-img.mood-happy,.char-pet-img.mood-excited,.char-pet-img.mood-hungry,.char-pet-img.mood-sleep{transform:scale(2.0);transform-origin:center center}
+  .char-pet-vid{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;mix-blend-mode:screen;z-index:1;transform-origin:center bottom;will-change:transform;backface-visibility:hidden}
+  .char-pet-vid.mood-happy,.char-pet-vid.mood-excited,.char-pet-vid.mood-hungry,.char-pet-vid.mood-sleep{transform:scale(2.0);transform-origin:center center}
   .char-pet-img.char-tap{animation:charTap .65s cubic-bezier(.34,1.56,.64,1)!important}
   @keyframes charTap{0%{transform:scale(1) translateY(0) rotate(0)}28%{transform:scale(1.12) translateY(-10px) rotate(-4deg)}55%{transform:scale(.95) translateY(3px) rotate(3deg)}78%{transform:scale(1.05) translateY(-4px) rotate(-1deg)}100%{transform:scale(1) translateY(0) rotate(0)}}
   .char-pet-img.char-wake{animation:charWake 1.8s cubic-bezier(.34,1.56,.64,1)!important}
@@ -1367,9 +1369,9 @@ function careItem(stat,amount,cost){
 // Both starter guides (Barney/bear, Penny/bunny) have full, clean mood clips including excited.
 function companionImg(mood){
   const c=getChar();
-  if(c.id==="bear") return {webp:`barney-${mood}.webp?v=2`, fallback:`barney-${mood}.png`};
-  if(c.id==="bunny") return {webp:`bunny-${mood}.webp?v=2`, fallback:`characters/bunny.jpg`};
-  return {webp:`characters/${c.id}-idle.webp`, fallback:`characters/${c.id}.jpg`};
+  if(c.id==="bear") return {type:"img", webp:`barney-${mood}.webp?v=2`, fallback:`barney-${mood}.png`};
+  if(c.id==="bunny") return {type:"video", src:`bunny-${mood}.mp4`};
+  return {type:"img", webp:`characters/${c.id}-idle.webp`, fallback:`characters/${c.id}.jpg`};
 }
 function companionWave(){
   const c=getChar();
@@ -1834,10 +1836,14 @@ function renderToday(v){
   const awayMs=state.lastSeen?Date.now()-state.lastSeen:0;
   const wasAsleep=awayMs>1*60*60*1000;
   const startImg=wasAsleep?companionImg("sleep"):_img;
+  const _isVid=_img.type==="video";
+  const _petEl=_isVid
+    ? `<video src="${startImg.src}" id="charPetImg" class="char-pet-vid mood-${wasAsleep?"sleep":_m}" autoplay loop muted playsinline></video>`
+    : `<img src="${startImg.webp}" id="charPetImg" class="char-pet-img mood-${wasAsleep?"sleep":_m}" alt="${nm}" onerror="this.onerror=null;this.src='${startImg.fallback}'">`;
   const stats=[["hunger","🍎","#fbbf24"],["clean","🧼","#38bdf8"],["happy","🎮","#f472b6"],["energy","😴","#a78bfa"]];
   return`<div class="char-showcase">
-    <div class="char-stage" id="charStage" data-actual-mood="${_m}" data-actual-webp="${_img.webp}" data-actual-fb="${_img.fallback}" data-was-asleep="${wasAsleep?1:0}" data-char-name="${nm}">
-      <img src="${startImg.webp}" id="charPetImg" class="char-pet-img mood-${wasAsleep?"sleep":_m}" alt="${nm}" onerror="this.onerror=null;this.src='${startImg.fallback}'">
+    <div class="char-stage" id="charStage" data-actual-mood="${_m}" data-actual-src="${_isVid?_img.src:_img.webp}" data-actual-fb="${_img.fallback||""}" data-char-type="${_img.type}" data-was-asleep="${wasAsleep?1:0}" data-char-name="${nm}">
+      ${_petEl}
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
@@ -1896,25 +1902,28 @@ function renderToday(v){
   // Mood preview buttons
   const MOOD_STATUS_MAP={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"};
   window.switchCharMood=function(m){
-    const img=document.getElementById("charPetImg");
-    if(!img)return;
+    const el=document.getElementById("charPetImg");
+    if(!el)return;
     const ci=companionImg(m);
-    img.src=ci.webp;
-    img.onerror=()=>{img.onerror=null;img.src=ci.fallback;};
-    ["idle","happy","excited","hungry","sleep"].forEach(x=>img.classList.toggle("mood-"+x,x===m));
+    if(ci.type==="video"){
+      el.src=ci.src; el.load(); el.play();
+    } else {
+      el.src=ci.webp;
+      el.onerror=()=>{el.onerror=null;el.src=ci.fallback;};
+    }
+    ["idle","happy","excited","hungry","sleep"].forEach(x=>el.classList.toggle("mood-"+x,x===m));
     const lbl=document.querySelector("[data-mood-lbl]");
     if(lbl)lbl.textContent=MOOD_STATUS_MAP[m]||"";
     document.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.textContent.toLowerCase().includes(m)));
-    // restart sleep loop if switching to sleep
     clearTimeout(window._sleepLoopTimer);
-    if(m==="sleep"){
+    if(m==="sleep" && ci.type!=="video"){
       const ss=ci.webp;
       function _sl(){const i=document.getElementById("charPetImg");if(!i||!i.src.includes("sleep"))return;i.src="";requestAnimationFrame(()=>requestAnimationFrame(()=>{i.src=ss;window._sleepLoopTimer=setTimeout(_sl,5100);}));}
       window._sleepLoopTimer=setTimeout(_sl,5100);
     }
   };
-  // Loop sleep WebP — animated WebP has a finite play count, restart it every ~5s
-  if(_petImg&&_petImg.src.includes("sleep")){
+  // Loop sleep WebP — only needed for img characters (video loops natively)
+  if(_petImg&&_petImg.tagName!=="VIDEO"&&_petImg.src.includes("sleep")){
     const _ss=_petImg.src;
     function _loopSleep(){
       if(!_petImg.isConnected||!_petImg.src.includes("sleep"))return;
@@ -1925,8 +1934,9 @@ function renderToday(v){
   }
   // Wake-up sequence if away 3+ hours
   if(_stage&&_petImg&&_stage.dataset.wasAsleep==="1"){
-    const _aw=_stage.dataset.actualWebp,_af=_stage.dataset.actualFb,_am=_stage.dataset.actualMood,_nm=_stage.dataset.charName;
-    const _wave=companionWave();
+    const _aw=_stage.dataset.actualSrc,_af=_stage.dataset.actualFb,_am=_stage.dataset.actualMood,_nm=_stage.dataset.charName;
+    const _isVidChar=_stage.dataset.charType==="video";
+    const _wave=_isVidChar?null:companionWave();
     setTimeout(()=>{
       const MOOD_LABELS={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"};
       if(_wave){
@@ -1937,6 +1947,11 @@ function renderToday(v){
           _petImg.src=_aw; _petImg.onerror=()=>{_petImg.onerror=null;_petImg.src=_af;};
           const lbl=document.querySelector("[data-mood-lbl]"); if(lbl)lbl.textContent=MOOD_LABELS[_am]||"";
         },_wave.ms);
+      } else if(_isVidChar){
+        // Video character — just switch to actual mood clip
+        _petImg.src=_aw; _petImg.load(); _petImg.play();
+        const lbl=document.querySelector("[data-mood-lbl]"); if(lbl)lbl.textContent=MOOD_LABELS[_am]||"";
+        toast(`${_nm} wakes up! 👋`);
       } else {
         // No wave clip — fall back to CSS pop-in
         _petImg.src=_aw; _petImg.onerror=()=>{_petImg.onerror=null;_petImg.src=_af;};

@@ -1,5 +1,5 @@
-const CACHE = "lifemanual-v141";
-const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-interests.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png", "barney-happy.webp", "barney-hungry.webp", "barney-sleep.webp", "barney-excited.webp", "barney-idle.webp", "bunny-happy.webp", "bunny-hungry.webp", "bunny-sleep.webp", "bunny-idle.webp", "bunny-excited.webp", "bunny-wave.webp", "barney-wave.webp", "bunny-knock.mp4", "bear-knock.mp4", "dolphin-new.mp4", "jellyfish.mp4"];
+const CACHE = "lifemanual-v142";
+const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-interests.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png", "barney-happy.webp", "barney-hungry.webp", "barney-sleep.webp", "barney-excited.webp", "barney-idle.webp", "bunny-wave.webp", "barney-wave.webp", "bunny-knock.mp4", "bear-knock.mp4", "dolphin-new.mp4", "jellyfish.mp4", "bunny-idle.mp4", "bunny-happy.mp4", "bunny-excited.mp4", "bunny-hungry.mp4", "bunny-sleep.mp4"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
