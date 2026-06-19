@@ -181,6 +181,12 @@
   .bubble .btn-video{margin-top:8px}
   .bubble.celebrate{border-left-color:#34d399;background:linear-gradient(135deg,rgba(5,31,24,.92),var(--card));box-shadow:0 0 40px rgba(52,211,153,.1)}
   .bubble.sweeping .sweep{animation:cardSweep .5s ease forwards}
+  /* ── Theme-flavoured guide bubbles ─────────────────────────────────────── */
+  html.light  .bubble.guide{background:#fff;border:1px solid #d8dff5;border-left:3px solid var(--sc,#4f46e5);box-shadow:0 4px 18px rgba(99,102,241,.09)}
+  html.kawaii .bubble.guide{background:linear-gradient(135deg,#fff0f6,#f3e5ff);border:1.5px solid rgba(244,143,177,.45);border-left:4px solid var(--sc,#ec4899);border-radius:20px 20px 20px 4px}
+  html.ocean  .bubble.guide{background:linear-gradient(135deg,rgba(8,145,178,.12),rgba(6,78,112,.18));border:1px solid rgba(34,211,238,.22);border-left:3px solid var(--sc,#22d3ee);box-shadow:0 4px 22px rgba(34,211,238,.08)}
+  html.forest .bubble.guide{background:linear-gradient(135deg,rgba(22,101,52,.22),rgba(5,46,22,.28));border:1px solid rgba(74,222,128,.2);border-left:3px solid var(--sc,#4ade80)}
+  html.galaxy .bubble.guide{background:linear-gradient(135deg,rgba(109,40,217,.18),rgba(10,6,24,.55));border:1px solid rgba(167,139,250,.22);border-left:3px solid var(--sc,#a78bfa);box-shadow:0 0 22px rgba(167,139,250,.12),inset 0 0 28px rgba(109,40,217,.07)}
   .qr{display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start;margin:-2px 0 2px 38px}
   .qr button{background:var(--card2);border:1.5px solid rgba(99,102,241,.3);border-radius:999px;padding:8px 16px;font-size:.84rem;color:#a78bfa;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .15s,background .2s}
   .qr .qr-got{border-color:rgba(34,211,238,.45);color:#22d3ee}
