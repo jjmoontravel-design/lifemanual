@@ -739,9 +739,9 @@
   /* bubbles rising from the seabed */
   .sea-bub{position:absolute;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);pointer-events:none;animation:bubUp linear infinite}
   @keyframes bubUp{0%{transform:translateY(0) scale(.5);opacity:0}12%{opacity:.85}88%{opacity:.5}100%{transform:translateY(-95vh) scale(1.05);opacity:0}}
-  /* jellyfish rise from bottom, angle toward center, shrink into distance */
-  .jelly-vid{position:absolute;top:0;mix-blend-mode:screen;pointer-events:none;animation:jellyDepth ease-in infinite}
-  @keyframes jellyDepth{0%{transform:translateY(110vh) translateX(0) scale(1);opacity:.9}60%{opacity:.7}100%{transform:translateY(35vh) translateX(var(--dx,0)) scale(0.04);opacity:0}}
+  /* jellyfish swim bottom to top continuously like dolphins go left to right */
+  .jelly-vid{position:absolute;top:0;mix-blend-mode:screen;pointer-events:none;animation:jellyUp linear infinite}
+  @keyframes jellyUp{0%{transform:translateY(108vh) translateX(0)}25%{transform:translateY(75vh) translateX(12px)}50%{transform:translateY(45vh) translateX(-10px)}75%{transform:translateY(15vh) translateX(10px)}100%{transform:translateY(-18vh) translateX(0)}}
   /* leaves / petals drifting down */
   .crit.leaf{animation:leafFall linear infinite}
   @keyframes leafFall{0%{transform:translateY(-14vh) translateX(0) rotate(0);opacity:0}10%{opacity:1}50%{transform:translateY(44vh) translateX(34px) rotate(180deg)}90%{opacity:.8}100%{transform:translateY(104vh) translateX(-22px) rotate(360deg);opacity:0}}
