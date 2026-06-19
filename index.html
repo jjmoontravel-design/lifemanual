@@ -749,6 +749,10 @@
   /* UFO hover-glide */
   .crit.ufo{animation:ufo ease-in-out infinite}
   @keyframes ufo{0%{transform:translate(-12vw,0)}50%{transform:translate(55vw,-6vh)}100%{transform:translate(116vw,2vh)}}
+  /* SVG fish tail wiggle */
+  @keyframes fishTail{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+  .ftail{animation:fishTail .42s ease-in-out infinite}
+  .ftail-s{animation:fishTail .8s ease-in-out infinite}
   @media(prefers-reduced-motion:reduce){.crit,.sea-bub{animation:none!important}}
   /* battery saver: only animate creatures on the visible tab */
   .crit,.sea-bub{animation-play-state:paused}
@@ -897,16 +901,62 @@
   <div class="scene scene-today">
     <div class="td-sky"></div>
     <div class="scene-stars td-stars"></div>
-    <!-- 🌊 ocean -->
-    <span class="crit oc swim" style="top:18%;font-size:2.2rem;animation-duration:38s">🦈</span>
-    <span class="crit oc swim rev" style="top:44%;font-size:1.8rem;animation-duration:28s;animation-delay:-6s">🐬</span>
-    <span class="crit oc swim" style="top:62%;font-size:1.4rem;animation-duration:24s;animation-delay:-11s">🐠</span>
-    <span class="crit oc swim rev" style="top:34%;font-size:1.2rem;animation-duration:20s;animation-delay:-3s">🐡</span>
-    <span class="crit oc swim" style="top:74%;font-size:1.3rem;animation-duration:30s;animation-delay:-18s">🐟</span>
-    <span class="crit oc swim rev" style="top:55%;font-size:1.1rem;animation-duration:22s;animation-delay:-9s">🐠</span>
-    <span class="crit oc swim" style="top:82%;font-size:2rem;animation-duration:52s;animation-delay:-22s">🐢</span>
-    <span class="crit oc swim rev" style="top:28%;font-size:1.5rem;animation-duration:35s;animation-delay:-14s">🦑</span>
-    <span class="crit oc floaty" style="top:68%;left:72%;font-size:2rem;animation-duration:10s">🐙</span>
+    <!-- 🌊 ocean — SVG fish with animated tails -->
+    <!-- Clownfish orange -->
+    <svg class="crit oc swim" viewBox="0 0 88 42" xmlns="http://www.w3.org/2000/svg" style="top:52%;width:54px;animation-duration:28s;animation-delay:-8s;overflow:visible">
+      <g class="ftail" style="transform-origin:18px 21px"><polygon points="18,21 2,9 2,33" fill="#c94010"/></g>
+      <ellipse cx="52" cy="21" rx="30" ry="16" fill="#ff7043"/>
+      <path d="M46,6 Q52,5 58,6 L58,36 Q52,37 46,36 Z" fill="rgba(255,255,255,0.78)"/>
+      <polygon points="38,7 56,7 47,17" fill="#c94010"/>
+      <ellipse cx="50" cy="33" rx="9" ry="5" fill="#c94010" transform="rotate(-20,50,33)"/>
+      <circle cx="76" cy="17" r="5.5" fill="white"/><circle cx="77" cy="17" r="3" fill="#111"/><circle cx="75.5" cy="15.5" r="1" fill="white"/>
+    </svg>
+    <!-- Blue surgeonfish -->
+    <svg class="crit oc swim rev" viewBox="0 0 88 40" xmlns="http://www.w3.org/2000/svg" style="top:36%;width:48px;animation-duration:33s;animation-delay:-15s;overflow:visible">
+      <g class="ftail" style="transform-origin:16px 20px"><polygon points="16,20 2,8 2,32" fill="#2563eb"/></g>
+      <ellipse cx="50" cy="20" rx="30" ry="15" fill="#3b82f6"/>
+      <polygon points="34,5 54,5 44,14" fill="#1d4ed8"/>
+      <polygon points="36,32 50,40 56,32" fill="#1d4ed8"/>
+      <ellipse cx="17" cy="20" rx="7" ry="11" fill="#fbbf24" opacity="0.85"/>
+      <circle cx="73" cy="16" r="5" fill="white"/><circle cx="74" cy="16" r="2.5" fill="#0f172a"/><circle cx="72.5" cy="14.5" r="1" fill="white"/>
+    </svg>
+    <!-- Yellow wrasse -->
+    <svg class="crit oc swim" viewBox="0 0 80 38" xmlns="http://www.w3.org/2000/svg" style="top:68%;width:42px;animation-duration:22s;animation-delay:-5s;overflow:visible">
+      <g class="ftail" style="transform-origin:14px 19px"><polygon points="14,19 0,8 0,30" fill="#d97706"/></g>
+      <ellipse cx="46" cy="19" rx="28" ry="14" fill="#fbbf24"/>
+      <line x1="42" y1="5" x2="42" y2="33" stroke="#d97706" stroke-width="3" stroke-linecap="round"/>
+      <line x1="52" y1="6" x2="52" y2="32" stroke="#d97706" stroke-width="2" stroke-linecap="round"/>
+      <polygon points="32,5 50,5 41,13" fill="#d97706"/>
+      <circle cx="68" cy="15" r="4.5" fill="white"/><circle cx="69" cy="15" r="2.2" fill="#111"/>
+    </svg>
+    <!-- Shark -->
+    <svg class="crit oc swim" viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg" style="top:16%;width:82px;animation-duration:55s;overflow:visible">
+      <g class="ftail-s" style="transform-origin:18px 28px"><polygon points="18,28 0,12 8,28 0,44" fill="#6b8fa0"/></g>
+      <ellipse cx="70" cy="30" rx="46" ry="14" fill="#8faab3"/>
+      <ellipse cx="70" cy="26" rx="46" ry="10" fill="#7a9aa3"/>
+      <polygon points="54,16 70,16 62,4" fill="#6b8fa0"/>
+      <polygon points="58,38 74,50 82,38" fill="#6b8fa0"/>
+      <ellipse cx="70" cy="34" rx="40" ry="8" fill="#c8dde3"/>
+      <line x1="90" y1="20" x2="88" y2="34" stroke="#6b8fa0" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="96" y1="19" x2="94" y2="33" stroke="#6b8fa0" stroke-width="1" stroke-linecap="round"/>
+      <circle cx="104" cy="24" r="4" fill="white"/><circle cx="105" cy="24" r="2" fill="#0f172a"/>
+    </svg>
+    <!-- Purple spotted fish -->
+    <svg class="crit oc swim rev" viewBox="0 0 82 40" xmlns="http://www.w3.org/2000/svg" style="top:44%;width:44px;animation-duration:26s;animation-delay:-11s;overflow:visible">
+      <g class="ftail" style="transform-origin:15px 20px"><polygon points="15,20 1,8 1,32" fill="#9333ea"/></g>
+      <ellipse cx="48" cy="20" rx="29" ry="15" fill="#c084fc"/>
+      <polygon points="34,5 52,5 43,14" fill="#9333ea"/>
+      <circle cx="42" cy="18" r="3.5" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="54" cy="23" r="2.5" fill="rgba(255,255,255,0.35)"/>
+      <circle cx="36" cy="24" r="2" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="70" cy="16" r="5" fill="white"/><circle cx="71" cy="16" r="2.5" fill="#1e1b4b"/><circle cx="69.5" cy="14.5" r="1" fill="white"/>
+    </svg>
+    <!-- Sea turtle emoji (fine as-is) -->
+    <span class="crit oc swim" style="top:80%;font-size:2.2rem;animation-duration:58s;animation-delay:-22s">🐢</span>
+    <!-- Dolphin emoji -->
+    <span class="crit oc swim rev" style="top:26%;font-size:2rem;animation-duration:20s;animation-delay:-7s">🐬</span>
+    <!-- Octopus floating -->
+    <span class="crit oc floaty" style="top:70%;left:74%;font-size:2rem;animation-duration:10s;animation-delay:-2s">🐙</span>
     <div class="sea-bub" style="left:14%;bottom:-12px;width:9px;height:9px;animation-duration:10s"></div>
     <div class="sea-bub" style="left:34%;bottom:-12px;width:6px;height:6px;animation-duration:8s;animation-delay:-3s"></div>
     <div class="sea-bub" style="left:58%;bottom:-12px;width:12px;height:12px;animation-duration:12s;animation-delay:-6s"></div>
