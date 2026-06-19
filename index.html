@@ -1054,11 +1054,11 @@
     <i class="orb" style="left:70%;top:18%;width:170px;height:170px;animation-delay:2s"></i>
     <!-- themed life over the schedule scene — real video dolphins + Nemo -->
     <!-- Video dolphin large -->
-    <video class="crit oc swim" src="dolphin.webm.mp4" style="top:22%;width:160px;animation-duration:22s;filter:none;object-fit:contain;mix-blend-mode:screen" autoplay loop muted playsinline></video>
+    <video class="crit oc swim" src="dolphin.webm.mp4" style="top:22%;width:160px;animation-duration:22s;filter:none;object-fit:contain" autoplay loop muted playsinline></video>
     <!-- Video dolphin medium rev -->
-    <video class="crit oc swim rev" src="dolphin.webm.mp4" style="top:38%;width:120px;animation-duration:28s;animation-delay:-10s;filter:none;object-fit:contain;mix-blend-mode:screen" autoplay loop muted playsinline></video>
+    <video class="crit oc swim rev" src="dolphin.webm.mp4" style="top:38%;width:120px;animation-duration:28s;animation-delay:-10s;filter:none;object-fit:contain" autoplay loop muted playsinline></video>
     <!-- Video dolphin small -->
-    <video class="crit oc swim" src="dolphin.webm.mp4" style="top:52%;width:80px;animation-duration:18s;animation-delay:-5s;filter:none;object-fit:contain;mix-blend-mode:screen" autoplay loop muted playsinline></video>
+    <video class="crit oc swim" src="dolphin.webm.mp4" style="top:52%;width:80px;animation-duration:18s;animation-delay:-5s;filter:none;object-fit:contain" autoplay loop muted playsinline></video>
     <!-- Baby dolphin placeholder 1 -->
         <!-- Nemo (clownfish) swimming by -->
     <svg class="crit oc swim rev" viewBox="0 0 88 42" xmlns="http://www.w3.org/2000/svg" style="top:62%;width:58px;animation-duration:19s;animation-delay:-14s;overflow:visible">
@@ -3525,6 +3525,63 @@ if(window.visualViewport){
     if(overlay)overlay.style.top=window.visualViewport.offsetTop+"px";
   });
 }
+
+// Dolphin chroma key — removes the light gray/blue background from dolphin videos
+function initDolphinChroma() {
+  const scene = document.querySelector('.scene-sched');
+  if (!scene) return;
+  const videos = scene.querySelectorAll('video');
+  if (!videos.length) return;
+
+  videos.forEach(vid => {
+    const cvs = document.createElement('canvas');
+    cvs.className = vid.className;
+    cvs.style.cssText = vid.style.cssText;
+    cvs.style.mixBlendMode = 'normal';
+    cvs.style.position = 'absolute';
+    cvs.style.objectFit = 'contain';
+    vid.parentNode.insertBefore(cvs, vid);
+    vid.style.display = 'none';
+
+    const ctx = cvs.getContext('2d', {willReadFrequently: true});
+    let bgR = 200, bgG = 210, bgB = 220, sampled = false;
+    let rafId;
+
+    function drawFrame() {
+      if (vid.readyState < 2) { rafId = requestAnimationFrame(drawFrame); return; }
+      cvs.width = vid.videoWidth || 320;
+      cvs.height = vid.videoHeight || 240;
+      ctx.drawImage(vid, 0, 0);
+
+      // Sample background color from top-left corner on first frame
+      if (!sampled) {
+        const px = ctx.getImageData(4, 4, 1, 1).data;
+        bgR = px[0]; bgG = px[1]; bgB = px[2];
+        sampled = true;
+      }
+
+      const frame = ctx.getImageData(0, 0, cvs.width, cvs.height);
+      const d = frame.data;
+      const thresh = 40;
+      for (let i = 0; i < d.length; i += 4) {
+        if (Math.abs(d[i]-bgR) < thresh && Math.abs(d[i+1]-bgG) < thresh && Math.abs(d[i+2]-bgB) < thresh) {
+          d[i+3] = 0;
+        }
+      }
+      ctx.putImageData(frame, 0, 0);
+      rafId = requestAnimationFrame(drawFrame);
+    }
+
+    vid.addEventListener('play', () => { cancelAnimationFrame(rafId); drawFrame(); });
+    vid.addEventListener('pause', () => cancelAnimationFrame(rafId));
+    if (!vid.paused && vid.readyState >= 2) drawFrame();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Run after a short delay to let videos initialize
+  setTimeout(initDolphinChroma, 800);
+});
 </script>
 
 <!-- ── FLOATING CHAT BUTTON ── -->
