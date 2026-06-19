@@ -544,7 +544,7 @@
   @keyframes drift2{from{transform:translate(0,0) scale(1.1)}to{transform:translate(12vw,-9vh) scale(.9)}}
 
   /* ===== PER-TAB SCENE BACKGROUNDS ===== */
-  #scene{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+  #scene{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;isolation:isolate}
   .scene{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
   body[data-tab="journey"] .scene-forest,
   body[data-tab="guides"] .scene-road,
