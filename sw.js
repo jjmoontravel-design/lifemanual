@@ -1,4 +1,4 @@
-const CACHE = "lifemanual-v163";
+const CACHE = "lifemanual-v164";
 const ASSETS = ["./", "index.html", "data-journey.js", "data-daily.js", "data-guides.js", "data-interests.js", "data-characters.js", "data-replies.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "barney-happy.png", "barney-hungry.png", "barney-sleep.png", "barney-excited.png", "barney-idle.png", "barney-happy.webp", "barney-hungry.webp", "barney-sleep.webp", "barney-excited.webp", "barney-idle.webp", "bunny-wave.webp", "barney-wave.webp", "bunny-knock.mp4", "bear-knock.mp4", "dolphin-new.mp4", "jellyfish.mp4", "bunny-idle.mp4", "bunny-happy.mp4", "bunny-excited.mp4", "bunny-hungry.mp4", "bunny-sleep.mp4", "galaxy-bg.jpg", "galaxy-journey.jpg", "galaxy-guides.jpg", "galaxy-sched.jpg", "galaxy-you.jpg", "ufo.mp4", "warp.mp4", "kawaii-bg.jpg", "kawaii-journey.jpg", "kawaii-guides.jpg", "kawaii-sched.jpg", "kawaii-you.jpg", "kawaii-sparkle.mp4", "kawaii-confetti.mp4", "kawaii-petals.mp4", "forest-bg.jpg", "forest-journey.jpg", "forest-guides.jpg", "forest-sched.jpg", "forest-you.jpg", "forest-fireflies.mp4"];
 
 self.addEventListener("install", e => {
