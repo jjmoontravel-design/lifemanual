@@ -3550,8 +3550,9 @@ function initDolphinChroma() {
       const brightness = (r + g + b) / 3;
       const maxC = Math.max(r, g, b), minC = Math.min(r, g, b);
       const saturation = maxC - minC;
-      // Light pixel with low saturation = background (gray/white/light-blue)
-      return brightness > 150 && saturation < 60;
+      // Very bright + low saturation = light gray/white background
+      // Dolphin body is medium gray (brightness ~80-130) so threshold at 170 keeps it
+      return brightness > 170 && saturation < 55;
     }
 
     function drawFrame() {
