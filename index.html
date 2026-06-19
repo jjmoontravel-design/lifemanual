@@ -739,9 +739,9 @@
   /* bubbles rising from the seabed */
   .sea-bub{position:absolute;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);pointer-events:none;animation:bubUp linear infinite}
   @keyframes bubUp{0%{transform:translateY(0) scale(.5);opacity:0}12%{opacity:.85}88%{opacity:.5}100%{transform:translateY(-95vh) scale(1.05);opacity:0}}
-  /* jellyfish gently pulsing and drifting */
-  .jelly-vid{position:absolute;mix-blend-mode:screen;pointer-events:none;animation:jellyDrift ease-in-out infinite}
-  @keyframes jellyDrift{0%,100%{transform:translateY(0) translateX(0)}25%{transform:translateY(-18px) translateX(5px)}50%{transform:translateY(-8px) translateX(-4px)}75%{transform:translateY(-22px) translateX(7px)}}
+  /* jellyfish rising from bottom to top with gentle sway */
+  .jelly-vid{position:absolute;bottom:0;mix-blend-mode:screen;pointer-events:none;animation:jellyRise ease-in-out infinite}
+  @keyframes jellyRise{0%{transform:translateY(110vh) translateX(0);opacity:0}8%{opacity:.95}30%{transform:translateY(72vh) translateX(14px)}60%{transform:translateY(38vh) translateX(-12px)}90%{opacity:.8}100%{transform:translateY(-18vh) translateX(8px);opacity:0}}
   /* leaves / petals drifting down */
   .crit.leaf{animation:leafFall linear infinite}
   @keyframes leafFall{0%{transform:translateY(-14vh) translateX(0) rotate(0);opacity:0}10%{opacity:1}50%{transform:translateY(44vh) translateX(34px) rotate(180deg)}90%{opacity:.8}100%{transform:translateY(104vh) translateX(-22px) rotate(360deg);opacity:0}}
@@ -1028,10 +1028,11 @@
     <i class="fly" style="left:62%;top:60%;animation-delay:3.2s"></i>
     <i class="fly" style="left:76%;top:52%;animation-delay:0.7s"></i>
     <i class="fly" style="left:88%;top:58%;animation-delay:2.7s"></i>
-    <!-- Jellyfish floating in journey scene — needs jellyfish.mp4 (black bg + screen blend) -->
-    <video class="jelly-vid" src="jellyfish.mp4" style="top:12%;left:10%;width:120px;animation-duration:6s" autoplay loop muted playsinline></video>
-    <video class="jelly-vid" src="jellyfish.mp4" style="top:38%;left:65%;width:80px;animation-duration:8s;animation-delay:-3s" autoplay loop muted playsinline></video>
-    <video class="jelly-vid" src="jellyfish.mp4" style="top:58%;left:30%;width:60px;animation-duration:7s;animation-delay:-5s" autoplay loop muted playsinline></video>
+    <!-- Jellyfish rising from bottom — black bg + screen blend -->
+    <video class="jelly-vid" src="jellyfish.mp4" style="left:5%;width:200px;animation-duration:18s;animation-delay:0s" autoplay loop muted playsinline></video>
+    <video class="jelly-vid" src="jellyfish.mp4" style="left:35%;width:160px;animation-duration:22s;animation-delay:-8s" autoplay loop muted playsinline></video>
+    <video class="jelly-vid" src="jellyfish.mp4" style="left:62%;width:220px;animation-duration:16s;animation-delay:-14s" autoplay loop muted playsinline></video>
+    <video class="jelly-vid" src="jellyfish.mp4" style="left:78%;width:130px;animation-duration:20s;animation-delay:-5s" autoplay loop muted playsinline></video>
     <!-- themed life over the journey scene -->
     <span class="crit oc swim" style="top:34%;font-size:1.3rem;animation-duration:25s">🐟</span>
     <span class="crit oc swim rev" style="top:46%;font-size:1.1rem;animation-duration:20s;animation-delay:-5s">🐠</span>
