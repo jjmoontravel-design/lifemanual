@@ -722,6 +722,17 @@
   html.galaxy .y-sky{background:radial-gradient(120% 95% at 50% 28%,#3a1466,#1a0e3a 62%,#0a0618)}
   html.galaxy .y-neb1{background:radial-gradient(circle,rgba(217,70,239,.44),transparent 66%)}
   html.galaxy .y-neb2{background:radial-gradient(circle,rgba(139,92,246,.40),transparent 66%)}
+  /* Galaxy — star field on schedule */
+  html.galaxy .scene-sched .scene-stars{opacity:.42}
+  /* Shooting star streaks */
+  .ga-streak{position:absolute;height:2px;width:160px;border-radius:2px;background:linear-gradient(to right,transparent,rgba(255,255,255,.92) 38%,rgba(192,132,252,.55) 72%,transparent);pointer-events:none;display:none;animation:gaStreak linear infinite}
+  html.galaxy .ga-streak{display:block}
+  @keyframes gaStreak{0%{opacity:0;transform:rotate(-28deg) translateX(0)}5%{opacity:1}82%{opacity:.65}100%{opacity:0;transform:rotate(-28deg) translateX(-110vw)}}
+  /* CSS planet with double rings for Schedule tab */
+  .ga-planet{position:absolute;top:7%;right:7%;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#a78bfa,#5b21b6 50%,#1e1b4b 80%,#0d0824);box-shadow:0 0 56px 18px rgba(109,40,217,.28),inset -22px -14px 36px rgba(0,0,0,.58);pointer-events:none;display:none}
+  html.galaxy .scene-sched .ga-planet{display:block}
+  .ga-planet::before{content:"";position:absolute;width:220px;height:50px;border-radius:50%;border:11px solid rgba(167,139,250,.3);top:50%;left:50%;transform:translate(-50%,-50%) rotateX(73deg)}
+  .ga-planet::after{content:"";position:absolute;width:262px;height:62px;border-radius:50%;border:5px solid rgba(192,132,252,.16);top:50%;left:50%;transform:translate(-50%,-50%) rotateX(73deg)}
 
   /* ═══ THEMED CREATURES — living background per theme & tab ════════════════ */
   .crit{position:absolute;display:none;line-height:1;user-select:none;pointer-events:none;z-index:3;will-change:transform;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
@@ -1004,6 +1015,10 @@
     <span class="crit ga shoot" style="top:6%;left:86%;font-size:1.7rem;animation-duration:7s">☄️</span>
     <span class="crit ga shoot" style="top:12%;left:68%;font-size:1.2rem;animation-duration:9s;animation-delay:-4s">⭐</span>
     <span class="crit ga floaty" style="top:74%;left:80%;font-size:2.1rem;animation-duration:8s;animation-delay:-3s">🚀</span>
+    <span class="crit ga floaty" style="top:42%;left:4%;font-size:2rem;animation-duration:12s;animation-delay:-5s">🧑‍🚀</span>
+    <i class="ga-streak" style="top:5%;right:2%;animation-duration:9s;animation-delay:0s"></i>
+    <i class="ga-streak" style="top:18%;right:22%;animation-duration:13s;animation-delay:-4s;width:100px"></i>
+    <i class="ga-streak" style="top:2%;right:46%;animation-duration:11s;animation-delay:-8s;width:130px"></i>
     <!-- 🌸 kawaii -->
     <span class="crit kw leaf" style="left:18%;font-size:1.4rem;animation-duration:12s">🌸</span>
     <span class="crit kw leaf" style="left:46%;font-size:1.1rem;animation-duration:15s;animation-delay:-5s">🌺</span>
@@ -1103,7 +1118,12 @@
     </svg>
     <span class="crit fo flit" style="top:30%;left:6%;font-size:1.6rem;animation-duration:21s">🦋</span>
     <span class="crit fo flit" style="top:54%;left:18%;font-size:1.2rem;animation-duration:25s;animation-delay:-7s">🦋</span>
-    <span class="crit ga floaty" style="top:22%;left:74%;font-size:2.6rem;animation-duration:9s">🪐</span>
+    <div class="scene-stars ga-stars"></div>
+    <div class="ga-planet"></div>
+    <i class="ga-streak" style="top:14%;right:0;animation-duration:11s;animation-delay:0s"></i>
+    <i class="ga-streak" style="top:30%;right:20%;animation-duration:16s;animation-delay:-6s;width:120px"></i>
+    <i class="ga-streak" style="top:7%;right:42%;animation-duration:9s;animation-delay:-11s;width:100px"></i>
+    <i class="ga-streak" style="top:22%;right:64%;animation-duration:14s;animation-delay:-3s;width:140px"></i>
     <span class="crit ga floaty" style="top:62%;left:14%;font-size:1.6rem;animation-duration:7s;animation-delay:-3s">🌟</span>
     <span class="crit kw up" style="left:24%;bottom:0;font-size:1.5rem;animation-duration:15s">💕</span>
     <span class="crit kw up" style="left:58%;bottom:0;font-size:1.2rem;animation-duration:18s;animation-delay:-8s">💖</span>
