@@ -454,6 +454,8 @@
   .char-showcase::before{content:"";position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:220px;background:radial-gradient(circle,rgba(167,139,250,.1) 0%,transparent 70%);pointer-events:none}
   /* Light/kawaii: dark gradient across top of card so character is visible, fades into card color below */
   html.light .char-showcase,html.kawaii .char-showcase{background:linear-gradient(180deg,#0d0824 0%,#1a0d40 52%,var(--card) 76%)}
+  html.light .char-showcase .char-name,html.kawaii .char-showcase .char-name{color:#fff}
+  html.light .char-showcase .char-mood-status,html.kawaii .char-showcase .char-mood-status{color:rgba(255,255,255,.72)}
   .char-name{font-weight:800;font-size:1.08rem;margin:8px 0 3px;color:var(--ink);letter-spacing:.01em}
   .char-mood-status{font-size:.82rem;color:var(--muted);margin-bottom:16px;min-height:1.2em}
   .char-mini-stats{display:flex;gap:12px;max-width:240px;margin:0 auto 14px}
@@ -1891,9 +1893,6 @@ function renderToday(v){
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
-    <div class="mood-row">
-      ${["idle","happy","excited","hungry","sleep"].map(m=>`<button class="mood-btn${m===_m?" sel":""}" onclick="switchCharMood('${m}')">${{idle:"😐 Idle",happy:"😊 Happy",excited:"🤩 Excited",hungry:"🍎 Hungry",sleep:"😴 Sleep"}[m]}</button>`).join("")}
-    </div>
     <div class="char-mini-stats">${stats.map(s=>`<div class="char-mini-stat"><span>${s[1]}</span><div class="char-mini-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
     <button class="char-care-ghost" data-care="1">Care for ${nm}</button>
   </div>`})()}
