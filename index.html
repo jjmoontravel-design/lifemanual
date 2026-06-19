@@ -1808,6 +1808,9 @@ function renderToday(v){
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
+    <div class="mood-row">
+      ${["idle","happy","excited","hungry","sleep"].map(m=>`<button class="mood-btn${m===_m?" sel":""}" onclick="switchCharMood('${m}')">${{idle:"😐 Idle",happy:"😊 Happy",excited:"🤩 Excited",hungry:"🍎 Hungry",sleep:"😴 Sleep"}[m]}</button>`).join("")}
+    </div>
     <div class="char-mini-stats">${stats.map(s=>`<div class="char-mini-stat"><span>${s[1]}</span><div class="char-mini-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
     <button class="char-care-ghost" data-care="1">Care for ${nm}</button>
   </div>`})()}
@@ -1857,6 +1860,25 @@ function renderToday(v){
     _petImg.addEventListener("animationend",()=>_petImg.classList.remove("char-tap"),{once:true});
   }
   if(_stage&&_petImg) _stage.addEventListener("click",_bounce);
+  // Mood preview buttons
+  const MOOD_STATUS_MAP={idle:"Just chillin' today",happy:"Feeling happy! 😊",excited:"Super excited! 🤩",hungry:"Getting hungry… 🍎",sleep:"Feeling sleepy 😴"};
+  window.switchCharMood=function(m){
+    const img=document.getElementById("charPetImg");
+    if(!img)return;
+    const ci=companionImg(m);
+    img.src=ci.webp;
+    img.onerror=()=>{img.onerror=null;img.src=ci.fallback;};
+    const lbl=document.querySelector("[data-mood-lbl]");
+    if(lbl)lbl.textContent=MOOD_STATUS_MAP[m]||"";
+    document.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.textContent.toLowerCase().includes(m)));
+    // restart sleep loop if switching to sleep
+    clearTimeout(window._sleepLoopTimer);
+    if(m==="sleep"){
+      const ss=ci.webp;
+      function _sl(){const i=document.getElementById("charPetImg");if(!i||!i.src.includes("sleep"))return;i.src="";requestAnimationFrame(()=>requestAnimationFrame(()=>{i.src=ss;window._sleepLoopTimer=setTimeout(_sl,5100);}));}
+      window._sleepLoopTimer=setTimeout(_sl,5100);
+    }
+  };
   // Loop sleep WebP — animated WebP has a finite play count, restart it every ~5s
   if(_petImg&&_petImg.src.includes("sleep")){
     const _ss=_petImg.src;
