@@ -2039,6 +2039,7 @@ function renderToday(v){
       v.id="charPetImg"; v.className=el.className.replace(/mood-\w+/g,"mood-"+m);
       v.muted=true; v.loop=true; v.playsInline=true; v.autoplay=true; v.src=ci.src;
       el.parentNode.replaceChild(v,el);
+      v.play().catch(()=>{});
     } else {
       el.style.transition="opacity .18s";
       el.style.opacity="0";
