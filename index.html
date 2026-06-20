@@ -1969,6 +1969,13 @@ function renderToday(v){
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
+    ${_isVid?`<div class="mood-row">
+      <button class="mood-btn${_m==="idle"?" sel":""}" onclick="switchCharMood('idle')">😌 Idle</button>
+      <button class="mood-btn${_m==="happy"?" sel":""}" onclick="switchCharMood('happy')">😊 Happy</button>
+      <button class="mood-btn${_m==="excited"?" sel":""}" onclick="switchCharMood('excited')">🤩 Excited</button>
+      <button class="mood-btn${_m==="hungry"?" sel":""}" onclick="switchCharMood('hungry')">🍎 Hungry</button>
+      <button class="mood-btn${_m==="sleep"?" sel":""}" onclick="switchCharMood('sleep')">😴 Sleep</button>
+    </div>`:""}
     <div class="char-mini-stats">${stats.map(s=>`<div class="char-mini-stat"><span>${s[1]}</span><div class="char-mini-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
     <button class="char-care-ghost" data-care="1">Care for ${nm}</button>
   </div>`})()}
