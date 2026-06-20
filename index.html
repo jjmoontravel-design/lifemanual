@@ -3409,7 +3409,7 @@ function lumiOnOpen(){
 let proactiveTimer=null;
 
 // ============ CHARACTER STORE ============
-function charUnlocked(id){return (state.unlocked||["bear"]).includes(id);}
+function charUnlocked(id){return true;}
 function openStore(){
   let ov=document.getElementById("storeOverlay");
   if(ov)ov.remove();
@@ -3684,9 +3684,11 @@ function showAlarmPopup(emoji, title, msg) {
   document.getElementById("alarm-title").textContent = title || "Event Reminder";
   document.getElementById("alarm-msg").textContent = msg || "It's time!";
   const charId = getChar()?.id || "bunny";
-  const knockSrc = (charId === "bear") ? "bear-knock.mp4" : "bunny-knock.mp4";
+  const KNOCK_STICKERS={bear:"🍯",bunny:"🌸",elephant:"🌿",beaver:"🪙",panda:"🎋",wolf:"⚡",capybara:"🍃",cat:"🎯",penguin:"📚",owl:"🦉",ant:"⭐",dolphin:"🌊",lion:"👑",fox:"🎨",deer:"🌱",turtle:"🍀",eagle:"🔭",tiger:"🔥",raccoon:"💻"};
+  const KNOCK_CHARS=["bear","bunny","elephant","beaver","panda","wolf","capybara","cat","penguin","owl","ant","dolphin","lion","fox","deer","turtle","eagle","tiger","raccoon"];
+  const knockSrc = KNOCK_CHARS.includes(charId) ? `${charId}-knock.mp4` : "bunny-knock.mp4";
   const sticker = document.getElementById("alarm-sticker");
-  if (sticker) sticker.textContent = charId === "bear" ? "🍯" : "🌸";
+  if (sticker) sticker.textContent = KNOCK_STICKERS[charId] || "🌸";
   const unmuteBtn = document.getElementById("alarm-unmute");
   if (unmuteBtn) unmuteBtn.style.display = "none";
   overlay.classList.add("show");
