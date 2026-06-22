@@ -2379,9 +2379,9 @@ function renderOnboard(){
   const d=ob.draft, b=$("#ob-body");
   const back=ob.step>0?`<button class="btn btn-ghost" id="ob-back">← Back</button>`:"";
   if(ob.step===0){
-    b.innerHTML=`<div class="ob-emoji">👋</div>
-      <h2>Hi, I'm Lumi.</h2>
-      <p>I'm your guide. I'll walk beside you with one small lesson a day — the stuff nobody sat you down and taught. Let's set up <b>your</b> manual together. Takes 30 seconds.</p>
+    b.innerHTML=`<div class="ob-emoji">📖</div>
+      <h2>Welcome to Life Manual.</h2>
+      <p>One small lesson a day — the stuff nobody sat you down and taught. A companion who keeps you on track. Let's set up <b>your</b> manual together. Takes 30 seconds.</p>
       <div class="ob-nav"><button class="btn btn-got" id="ob-next" style="flex:1;justify-content:center">Let's go →</button></div>`;
   }else if(ob.step===1){
     b.innerHTML=`<div class="ob-emoji">😊</div>
@@ -2425,7 +2425,7 @@ function renderOnboard(){
     b.innerHTML=`<div class="ob-emoji">🔔</div>
       <h2>Want me to check in on you?</h2>
       <p>I'll send a warm nudge tied to that day's lesson. No spam — just you and me.</p>
-      <div class="ob-toggle-row"><span style="font-weight:700">Lumi reminders</span>
+      <div class="ob-toggle-row"><span style="font-weight:700">Daily reminders</span>
         <input type="checkbox" id="ob-rem" ${d.remOn?"checked":""} style="width:24px;height:24px;accent-color:#34d399;cursor:pointer"></div>
       <div id="ob-times" style="${d.remOn?"":"opacity:.4;pointer-events:none"}">
         <div class="ob-toggle-row"><span>☀️ Morning</span><input type="time" id="ob-morning" value="${d.morning}"></div>
@@ -2436,7 +2436,7 @@ function renderOnboard(){
     const ch=CHARACTERS.find(x=>x.id===(d.character||"elephant"))||CHARACTERS[0];
     b.innerHTML=`<div class="ob-emoji">🌟</div>
       <h2>You're all set${d.name?", "+d.name:""}!</h2>
-      <p><b>${ch.name}</b> the ${ch.animal.toLowerCase()} is your guide now — here for ${ch.pillar.toLowerCase()}. Every day there's a fresh upload waiting. Finish all 7 and watch the sky. 💜<br><br>I've got you from here.</p>
+      <p><b>${ch.name}</b> the ${ch.animal.toLowerCase()} is your guide now — here for ${ch.pillar.toLowerCase()}. Every day there's a fresh upload waiting. Finish all 7 and watch the sky. 💜<br><br>${ch.name} has got you from here.</p>
       <div class="ob-nav"><button class="btn btn-got" id="ob-finish" style="flex:1;justify-content:center;font-size:1.05rem;padding:13px">Begin my journey ✨</button></div>
       <p style="font-size:.78rem;margin-top:12px">Everything stays on this device. No account, no tracking — even in 2150.</p>`;
   }
