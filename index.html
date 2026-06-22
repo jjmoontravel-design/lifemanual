@@ -389,6 +389,15 @@
   textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:monospace;font-size:.78rem;background:var(--card2);color:var(--ink)}
   .toast{position:fixed;bottom:112px;left:50%;transform:translateX(-50%);background:var(--grad);color:#06121f;padding:10px 22px;border-radius:999px;font-weight:800;z-index:60;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 28px rgba(34,211,238,.3)}
   .toast.show{opacity:1}
+  /* KNOCK POPUP */
+  @keyframes knockIn{from{opacity:0;transform:translateY(60px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .knock-popup{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer}
+  .knock-popup.hidden{display:none}
+  .knock-vid{width:100%;height:70%;object-fit:cover;animation:knockIn .4s cubic-bezier(.2,.8,.2,1) both}
+  .knock-msg{width:100%;padding:24px 28px 40px;text-align:center;animation:knockIn .4s .1s cubic-bezier(.2,.8,.2,1) both}
+  .knock-name{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+  .knock-text{font-size:1rem;color:rgba(255,255,255,.85);margin-bottom:10px;line-height:1.5;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+  .knock-hint{font-size:.78rem;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase}
   .overlay{position:fixed;inset:0;background:rgba(2,4,14,.88);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
   .modal{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px;max-width:430px;width:100%;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.6)}
   .modal h2{margin:6px 0 8px}
@@ -1264,6 +1273,15 @@
       <button class="btn btn-got" onclick="lumiOpen()">Open lesson →</button>
       <button class="btn btn-ghost" onclick="hideLumi()">Got it ✓</button>
     </div>
+  </div>
+</div>
+
+<div id="knock-popup" class="knock-popup hidden" onclick="hideKnockPopup()">
+  <video id="knock-vid" class="knock-vid" autoplay loop muted playsinline></video>
+  <div class="knock-msg">
+    <div class="knock-name" id="knock-name"></div>
+    <div class="knock-text" id="knock-text"></div>
+    <div class="knock-hint">Tap anywhere to open</div>
   </div>
 </div>
 
@@ -3648,6 +3666,35 @@ function startProactiveTimer(){
   proactiveTimer=setTimeout(proactiveNudge, 4*60*1000); // 4 minutes
 }
 
+// ── KNOCK POPUP ──
+function showKnockPopup(){
+  const c=getChar();
+  const vid=document.getElementById("knock-vid");
+  const popup=document.getElementById("knock-popup");
+  if(!vid||!popup)return;
+  const src=`${c.id==="bear"?"barney":c.id}-knock.mp4`;
+  popup.style.background=c.accent||c.color||"#1a0a2e";
+  vid.src=src;
+  vid.load();
+  vid.play().catch(()=>{});
+  document.getElementById("knock-name").textContent=c.name+" is knocking…";
+  document.getElementById("knock-text").textContent=c.hello||"Your daily lesson is ready!";
+  popup.classList.remove("hidden");
+}
+function hideKnockPopup(){
+  const popup=document.getElementById("knock-popup");
+  const vid=document.getElementById("knock-vid");
+  if(popup)popup.classList.add("hidden");
+  if(vid){vid.pause();vid.src="";}
+  state.tab="today"; render();
+}
+// Show knock popup if user hasn't opened app in 4+ hours
+function maybeShowKnock(){
+  if(!state.age)return;
+  const away=state.lastSeen?Date.now()-state.lastSeen:0;
+  if(away>4*60*60*1000)showKnockPopup();
+}
+
 // ── NOTIFICATION PERMISSION BANNER ──
 let _notifShown=false;
 function showNotifBanner(){
@@ -3787,6 +3834,8 @@ document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     state.lastSeen=Date.now();
     localStorage.setItem("lifemanual.lastSeen",state.lastSeen);
+  } else {
+    setTimeout(maybeShowKnock, 800);
   }
 });
 // iOS keyboard fix — keep chat overlay pinned above keyboard
