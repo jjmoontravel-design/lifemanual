@@ -433,6 +433,9 @@
   .ct-face{width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--cc)}
   .ct-name{font-size:.82rem;font-weight:800;line-height:1.1}
   .ct-pillar{font-size:.6rem;color:var(--muted);line-height:1.15;text-align:center}
+  .ob-match-card{width:100%;box-sizing:border-box;padding:18px 14px;margin-bottom:6px;gap:6px}
+  .ob-match-quote{font-size:.78rem;color:var(--muted);font-style:italic;text-align:center;margin-top:2px;line-height:1.4}
+  .ob-browse-sum{display:block;text-align:center;cursor:pointer;color:var(--muted);font-size:.82rem;padding:8px 0;user-select:none}
   /* INTERVIEW OPTION TILES (life stage + interests) */
   .opt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:4px 0 6px}
   .opt-tile{position:relative;display:flex;align-items:center;gap:9px;padding:13px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);cursor:pointer;font-family:inherit;color:var(--ink);font-size:.9rem;font-weight:600;text-align:left;line-height:1.2;transition:transform .12s,border-color .2s,box-shadow .2s}
@@ -2472,15 +2475,31 @@ function renderOnboard(){
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>
       <button class="ob-skip" id="ob-skip">Skip for now</button>`;
   }else if(ob.step===4){
-    if(!d.character)d.character=(d.gender==="female")?"bunny":"bear";
+    const _topId=d.interests&&d.interests[0];
+    const _topInt=_topId?INTERESTS.find(x=>x.id===_topId):null;
+    const _matchId=_topInt?_topInt.guide:(d.gender==="female"?"bunny":"bear");
+    if(!ob.draft._guideTouched)d.character=_matchId;
+    const mc=CHARACTERS.find(x=>x.id===d.character)||CHARACTERS[0];
+    const _hasInterests=d.interests&&d.interests.length>0;
     b.innerHTML=`<div class="ob-emoji">🤝</div>
-      <h2>Pick your guide</h2>
-      <p>Choose the friend who'll walk with you${d.name?", "+d.name:""}. Each one specializes in something different.</p>
-      <div class="char-grid" id="ob-chars">${CHARACTERS.map(ch=>`<button class="char-tile ${d.character===ch.id?"sel":""}" data-char="${ch.id}" style="--cc:${ch.color}">
-        <span class="ct-face" style="width:54px;height:54px">${charVideoHTML(ch)}</span>
-        <span class="ct-name">${ch.name}</span>
-        <span class="ct-pillar">${ch.pillar}</span>
-      </button>`).join("")}</div>
+      <h2>Meet your guide</h2>
+      <p>${_hasInterests?`Based on what you told us, <b>${mc.name}</b> is your best match.`:`Pick the friend who'll walk with you${d.name?", "+d.name:""}.`}</p>
+      <div id="ob-chars">
+        <button class="char-tile ob-match-card ${d.character===mc.id?"sel":""}" data-char="${mc.id}" style="--cc:${mc.color}">
+          <span class="ct-face" style="width:84px;height:84px">${charVideoHTML(mc)}</span>
+          <span class="ct-name" style="font-size:1rem;margin-top:4px">${mc.name} the ${mc.animal}</span>
+          <span class="ct-pillar" style="font-size:.72rem">${mc.pillar}</span>
+          <span class="ob-match-quote">"${mc.hello}"</span>
+        </button>
+        <details>
+          <summary class="ob-browse-sum">Browse all 19 guides ▾</summary>
+          <div class="char-grid" style="margin-top:8px">${CHARACTERS.map(ch=>`<button class="char-tile ${d.character===ch.id?"sel":""}" data-char="${ch.id}" style="--cc:${ch.color}">
+            <span class="ct-face" style="width:54px;height:54px">${charVideoHTML(ch)}</span>
+            <span class="ct-name">${ch.name}</span>
+            <span class="ct-pillar">${ch.pillar}</span>
+          </button>`).join("")}</div>
+        </details>
+      </div>
       <div class="ob-nav">${back}<button class="btn btn-got" id="ob-next">Next →</button></div>`;
   }else if(ob.step===5){
     b.innerHTML=`<div class="ob-emoji">🔔</div>
