@@ -1497,6 +1497,7 @@ function companionImg(mood){
   if(c.id==="fox") return {type:"video", src:`fox-${mood}.mp4`};
   if(c.id==="deer") return {type:"video", src:`deer-${mood}.mp4`};
   if(c.id==="turtle") return {type:"video", src:`turtle-${mood}.mp4`};
+  if(c.id==="eagle") return {type:"video", src:`eagle-${mood}.mp4`};
   return {type:"img", webp:`characters/${c.id}-idle.webp`, fallback:`characters/${c.id}.jpg`};
 }
 function companionWave(){
@@ -2047,7 +2048,7 @@ function renderToday(v){
   applyMood();
   startProactiveTimer();
   // Preload mood clips for smooth switching
-  const _charPrefixMap={bear:"barney",bunny:"bunny",elephant:"elephant",beaver:"beaver",panda:"panda",wolf:"wolf",capybara:"capybara",cat:"cat",penguin:"penguin",owl:"owl",ant:"ant",dolphin:"dolphin",lion:"lion",fox:"fox",deer:"deer",turtle:"turtle"};
+  const _charPrefixMap={bear:"barney",bunny:"bunny",elephant:"elephant",beaver:"beaver",panda:"panda",wolf:"wolf",capybara:"capybara",cat:"cat",penguin:"penguin",owl:"owl",ant:"ant",dolphin:"dolphin",lion:"lion",fox:"fox",deer:"deer",turtle:"turtle",eagle:"eagle"};
   const _charPrefix=_charPrefixMap[getChar().id];
   if(_charPrefix){["idle","happy","bored","hungry","sleep"].forEach(m=>{const v=document.createElement("video");v.src=`${_charPrefix}-${m}.mp4`;v.preload="auto";});}
   // Character interactions
