@@ -1663,6 +1663,7 @@ function markGot(slot){
   if(complete){
     const y=yesterdayKey(),t=todayKey();
     if(state.streak.last!==t){state.streak.n=(state.streak.last===y)?state.streak.n+1:1;state.streak.last=t;}
+    clearPetReminder();
     toast("⚡ Daily Upload complete! 🔥 "+state.streak.n+"-day streak");
     confetti();
     if(window.meteorShower)window.meteorShower(24);
@@ -3708,6 +3709,35 @@ function startProactiveTimer(){
   proactiveTimer=setTimeout(proactiveNudge, 4*60*1000); // 4 minutes
 }
 
+// ── PET REMINDER NOTIFICATIONS ──
+function schedulePetReminder(){
+  if(!("serviceWorker" in navigator)||!navigator.serviceWorker.controller)return;
+  if(!state.age)return;
+  if(gotCount()===activeSlots().length)return; // already done
+  const c=getChar();
+  const mood=barneyMood();
+  const streak=state.streak?.n||0;
+  let body;
+  if(mood==="hungry")body=`${c.name} is getting hungry! Come check in 🍎`;
+  else if(mood==="sleep")body=`${c.name} is falling asleep… time to check in 😴`;
+  else if(streak>=3)body=`Don't break your ${streak}-day streak! 🔥 ${c.name} is waiting.`;
+  else body=`Your daily lesson is ready! ${c.name} wants to see you 💜`;
+  const fireAt=Date.now()+4*60*60*1000;
+  navigator.serviceWorker.controller.postMessage({type:"SET_ALARM",id:"pet-reminder",fireAt,notifTitle:`📖 Life Manual`,body,tab:"today"});
+  // Also schedule streak-at-risk for 8pm if streak > 0
+  if(streak>0){
+    const now=new Date(), eod=new Date(); eod.setHours(20,0,0,0);
+    if(eod.getTime()>now.getTime()+60000){
+      navigator.serviceWorker.controller.postMessage({type:"SET_ALARM",id:"streak-risk",fireAt:eod.getTime(),notifTitle:`🔥 Streak at risk!`,body:`${c.name} says: don't break your ${streak}-day streak! Open Life Manual now.`,tab:"today"});
+    }
+  }
+}
+function clearPetReminder(){
+  if(!("serviceWorker" in navigator)||!navigator.serviceWorker.controller)return;
+  navigator.serviceWorker.controller.postMessage({type:"CLEAR_ALARM",id:"pet-reminder"});
+  navigator.serviceWorker.controller.postMessage({type:"CLEAR_ALARM",id:"streak-risk"});
+}
+
 // ── KNOCK POPUP ──
 function showKnockPopup(){
   const c=getChar();
@@ -3876,7 +3906,9 @@ document.addEventListener("visibilitychange",()=>{
   if(document.hidden){
     state.lastSeen=Date.now();
     localStorage.setItem("lifemanual.lastSeen",state.lastSeen);
+    schedulePetReminder();
   } else {
+    clearPetReminder();
     setTimeout(maybeShowKnock, 800);
   }
 });
