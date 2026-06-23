@@ -1393,6 +1393,12 @@ let state={
 };
 BANDS.forEach(b=>b.skills.forEach((s,i)=>s.id=b.id+"-"+i));
 const SLOTS=["skill","vocab","body","money","mind","world","challenge"];
+function activeSlots(){
+  const n=state.streak?.n||0;
+  if(n>=14)return SLOTS;
+  if(n>=7)return["skill","vocab","body","money","challenge"];
+  return["skill","vocab","challenge"];
+}
 const LEVELS=["Initiate","Apprentice","Explorer","Builder","Mentor","Sage","Luminary","Legend"];
 
 // ── Onboarding interview: life stages + interests (tailor the daily feed) ──
@@ -1426,8 +1432,9 @@ function feedOrder(){
     const it=INTERESTS.find(x=>x.id===id);
     if(it)it.slots.forEach(s=>{if(!order.includes(s))order.push(s);});
   });
-  SLOTS.forEach(s=>{if(!order.includes(s))order.push(s);});
-  return order;
+  const active=activeSlots();
+  active.forEach(s=>{if(!order.includes(s))order.push(s);});
+  return order.filter(s=>s==="foryou"||active.includes(s));
 }
 
 // ── Virtual pet: 4 care stats with real-time decay ──
@@ -1636,7 +1643,7 @@ function dailyContent(){
     mind:pick(DAILY.mind,17,2), world:pick(DAILY.world,19,4), challenge:pick(DAILY.challenge,23,5)
   };
 }
-function gotCount(){return SLOTS.filter(s=>state.daily.got[s]).length;}
+function gotCount(){return activeSlots().filter(s=>state.daily.got[s]).length;}
 function markGot(slot){
   if(state.daily.got[slot])return;
   // Capture bubble rect before state change for the guide cheer position
@@ -1648,7 +1655,7 @@ function markGot(slot){
   state.coins+=1; state.xp+=1;
   ensurePet(); state.pet.happy=Math.min(100,(state.pet.happy||0)+3); // lessons cheer your pet up
   if(slot==="skill"&&state.daily.skillId)state.done[state.daily.skillId]=true;
-  const complete=gotCount()===SLOTS.length;
+  const complete=gotCount()===activeSlots().length;
   state.history[todayKey()]=gotCount();
   if(complete){
     const y=yesterdayKey(),t=todayKey();
@@ -1659,7 +1666,7 @@ function markGot(slot){
     celebrate(28,90);          // big finish: lots of bubbles + stars rushing in
     setMood("dance");          // guide dances when the day is complete
   }else{
-    toast("🪙 +1 coin — "+(SLOTS.length-gotCount())+" to go");
+    toast("🪙 +1 coin — "+(activeSlots().length-gotCount())+" to go");
     celebrate(12,30);          // each task: bubbles drifting + a few pops
     setMood("happy",1300);     // a happy bounce for each finished task
     // Offer notifications after first lesson tap
@@ -1973,7 +1980,7 @@ function renderToday(v){
   const dateStr=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   const hr=new Date().getHours();
   const greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
-  const c=getChar(), done=n===SLOTS.length, left=SLOTS.length-n;
+  const c=getChar(), done=n===activeSlots().length, left=activeSlots().length-n;
   if(done)guideMood="dance"; else if(guideMood==="dance")guideMood="idle";
   const gFace=charFaceHTML(c);
   // Compact top row + lessons
@@ -2015,7 +2022,7 @@ function renderToday(v){
   <div class="chat-thread">
     <div class="msg guide"><div class="msg-face">${gFace}</div>
       <div class="bubble guide">${done
-        ?`All 7 done today${state.name?", "+state.name:""}! 🔥 That's a ${state.streak.n}-day streak.`
+        ?`All ${activeSlots().length} done today${state.name?", "+state.name:""}! 🔥 That's a ${state.streak.n}-day streak.`
         :`${state.name?state.name+", ":""}${left} lesson${left>1?"s":""} left today. Tap <b>Got it</b> as you go! 💜`}</div></div>`;
   // Build each card once, keyed by slot, then emit in the user's interest-led order.
   const cards={};
@@ -2044,7 +2051,7 @@ function renderToday(v){
   cards.challenge=moduleBubble("challenge",`<div class="title">${d.challenge.c}</div><div class="hint">${d.challenge.y}</div>`);
   feedOrder().forEach(slot=>{if(cards[slot])html+=cards[slot];});
   if(done)html+=`<div class="msg guide"><div class="msg-face">${gFace}</div>
-    <div class="bubble guide celebrate"><div class="title">🎉 All 7 done!</div>🪙 7 coins earned today. A fresh upload lands at midnight. See you tomorrow ✨</div></div>`;
+    <div class="bubble guide celebrate"><div class="title">🎉 All ${activeSlots().length} done!</div>🪙 ${activeSlots().length} coins earned today.${state.streak.n===7?" 🔓 5 cards unlocked starting tomorrow!":state.streak.n===14?" 🔓 All 7 cards unlocked starting tomorrow!":""} A fresh upload lands at midnight. See you tomorrow ✨</div></div>`;
   html+=`</div>`;
   v.innerHTML=html;
   applyMood();
