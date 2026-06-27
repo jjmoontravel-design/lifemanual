@@ -271,10 +271,6 @@
   /* ===== CHARACTER STAGE — Today screen ===== */
   .char-stage{position:relative;width:200px;height:200px;margin:16px auto 0;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   .char-aura{display:none}
-  .mood-row{display:flex;justify-content:center;gap:7px;margin:10px 0 2px;flex-wrap:wrap}
-  .mood-btn{background:var(--card2);border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit;color:var(--muted)}
-  .mood-btn.sel{border-color:#a78bfa;background:rgba(167,139,250,.15);color:#a78bfa}
-  .mood-btn:active{transform:scale(.9)}
   .char-pet-img{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));z-index:1;transform-origin:center bottom;will-change:transform;backface-visibility:hidden}
   .char-pet-img.mood-happy,.char-pet-img.mood-bored,.char-pet-img.mood-hungry,.char-pet-img.mood-sleep{transform:scale(2.0);transform-origin:center center}
   .char-pet-vid{position:absolute;inset:0;width:200px;height:200px;object-fit:contain;mix-blend-mode:lighten;z-index:1;transform-origin:center bottom;will-change:transform;backface-visibility:hidden}
@@ -2124,13 +2120,6 @@ function renderToday(v){
     </div>
     <div class="char-name">${nm}</div>
     <div class="char-mood-status" data-mood-lbl>${wasAsleep?"Waking up…":MOOD_STATUS[_m]}</div>
-    ${_isVid?`<div class="mood-row">
-      <button class="mood-btn${_m==="idle"?" sel":""}" onclick="switchCharMood('idle')">😌 Idle</button>
-      <button class="mood-btn${_m==="happy"?" sel":""}" onclick="switchCharMood('happy')">😊 Happy</button>
-      <button class="mood-btn${_m==="bored"?" sel":""}" onclick="switchCharMood('bored')">🎮 Bored</button>
-      <button class="mood-btn${_m==="hungry"?" sel":""}" onclick="switchCharMood('hungry')">🍎 Hungry</button>
-      <button class="mood-btn${_m==="sleep"?" sel":""}" onclick="switchCharMood('sleep')">😴 Sleep</button>
-    </div>`:""}
     <div class="char-mini-stats">${stats.map(s=>`<div class="char-mini-stat"><span>${s[1]}</span><div class="char-mini-bar"><i style="width:${Math.round(state.pet[s[0]])}%;background:${s[2]}"></i></div></div>`).join("")}</div>
     <button class="char-care-ghost${PET_STATS.some(k=>state.pet[k]<40)?" needs-care":""}" data-care="1">${PET_STATS.some(k=>state.pet[k]<40)?"⚠️ ":""}Care for ${nm}</button>
   </div>`})()}
@@ -2213,7 +2202,6 @@ function renderToday(v){
     ["idle","happy","bored","hungry","sleep"].forEach(x=>el.classList.toggle("mood-"+x,x===m));
     const lbl=document.querySelector("[data-mood-lbl]");
     if(lbl)lbl.textContent=MOOD_STATUS_MAP[m]||"";
-    document.querySelectorAll(".mood-btn").forEach(b=>b.classList.toggle("sel",b.textContent.toLowerCase().includes(m)));
     state.manualMood=m; state.manualMoodT=Date.now(); saveAll();
     clearTimeout(window._sleepLoopTimer);
     if(m==="sleep" && ci.type!=="video"){
