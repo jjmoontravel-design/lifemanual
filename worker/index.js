@@ -96,7 +96,9 @@ async function vapidJwt(endpoint, privJwkStr) {
   const hdr  = to64u(enc.encode(JSON.stringify({typ:'JWT',alg:'ES256'})));
   const body = to64u(enc.encode(JSON.stringify({aud:origin,exp:now+43200,sub:VAPID_SUBJECT})));
   const unsigned = `${hdr}.${body}`;
-  const privKey = await crypto.subtle.importKey('jwk', JSON.parse(privJwkStr), {name:'ECDSA',namedCurve:'P-256'}, false, ['sign']);
+  // Strip BOM and whitespace that PowerShell/Windows may add when setting the secret
+  const cleanJwk = privJwkStr.replace(/^﻿/, '').trim();
+  const privKey = await crypto.subtle.importKey('jwk', JSON.parse(cleanJwk), {name:'ECDSA',namedCurve:'P-256'}, false, ['sign']);
   const sig = await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'}, privKey, enc.encode(unsigned));
   return `${unsigned}.${to64u(new Uint8Array(sig))}`;
 }
@@ -119,7 +121,7 @@ async function sendPush(subscription, payload, privJwkStr) {
   return res.status; // 201 = delivered, 410 = subscription expired
 }
 
-// ─── Cron: fire every minute, check for events due in ~5 min ───────────────
+// ─── Cron: fire every minute, check for events + Lumi reminders ─────────────
 async function checkAlarms(env) {
   const index = JSON.parse(await env.LM_KV.get('users') || '[]');
   const now = Date.now();
@@ -128,28 +130,60 @@ async function checkAlarms(env) {
     const raw = await env.LM_KV.get('user:' + userId);
     if (!raw) continue;
     const data = JSON.parse(raw);
-    if (!data.subscription || !data.events?.length) continue;
+    if (!data.subscription) continue;
 
-    // tzOffset: minutes returned by JS getTimezoneOffset() — positive = west of UTC (e.g. EST=300)
     const tzOffset = data.tzOffset ?? 0;
+    let dirty = false;
 
-    for (const ev of data.events) {
+    // ── Scheduled events ──
+    for (const ev of (data.events || [])) {
       const times = nextEventTimes(ev, now, tzOffset);
-      for (const { fireAt, label } of times) {
-        if (fireAt >= now - 30000 && fireAt < now + 90000) {
+      for (const { fireAt, body } of times) {
+        if (fireAt >= now - 30000 && fireAt < now + 30000) {
           const status = await sendPush(data.subscription, {
-            title: '📅 Life Manual',
-            body: `${ev.emoji} ${ev.title} ${label}`,
+            title: `${ev.emoji} ${ev.title}`,
+            body,
             icon: '/icon-192.png',
             data: { tab: 'schedule' },
           }, env.VAPID_PRIVATE_JWK);
-          if (status === 410) {
-            data.subscription = null;
-            await env.LM_KV.put('user:' + userId, JSON.stringify(data));
+          if (status === 410) { data.subscription = null; dirty = true; }
+        }
+      }
+    }
+
+    // ── Lumi daily reminders (morning / evening) ──
+    const sch = data.schedule;
+    if (sch?.on && data.subscription) {
+      // Convert now to user's local time to get local hour:minute and day-of-week
+      const localNow = new Date(now - tzOffset * 60 * 1000);
+      const localDow = localNow.getUTCDay();
+      const localH   = localNow.getUTCHours();
+      const localM   = localNow.getUTCMinutes();
+      const days = sch.days ?? [0,1,2,3,4,5,6];
+      if (days.includes(localDow)) {
+        for (const [timeStr, type, emoji] of [
+          [sch.morning, 'morning', '☀️'],
+          [sch.evening, 'evening', '🌙'],
+        ]) {
+          if (!timeStr) continue;
+          const [h, m] = timeStr.split(':').map(Number);
+          if (localH === h && localM === m) {
+            const msgs = {
+              morning: "Your daily lesson is ready. Tap to start! 💜",
+              evening: "How'd today go? Check in with your guide 🌙",
+            };
+            await sendPush(data.subscription, {
+              title: `${emoji} Life Manual`,
+              body: msgs[type],
+              icon: '/icon-192.png',
+              data: { tab: 'today' },
+            }, env.VAPID_PRIVATE_JWK).catch(() => {});
           }
         }
       }
     }
+
+    if (dirty) await env.LM_KV.put('user:' + userId, JSON.stringify(data));
   }
 }
 
@@ -192,14 +226,15 @@ function nextEventTimes(ev, now, tzOffset = 0) {
   const [h, m] = ev.time.split(':').map(Number);
   const evMs = new Date(targetDate + 'T' + pad(h) + ':' + pad(m) + ':00Z').getTime() + tzOffset * 60 * 1000;
 
-  if (evMs - 5*60*1000 > now - 90000) results.push({ fireAt: evMs - 5*60*1000, label: 'in 5 minutes!' });
-  if (evMs > now - 90000) results.push({ fireAt: evMs, label: 'is starting now!' });
+  if (evMs - 5*60*1000 > now - 90000) results.push({ fireAt: evMs - 5*60*1000, label: '5 min', body: 'Starting in 5 minutes' });
+  if (evMs > now - 90000) results.push({ fireAt: evMs, label: 'now', body: 'Starting now!' });
   return results;
 }
 
 // ─── Request router ────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
+    try {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
 
@@ -214,6 +249,17 @@ export default {
       // Add to user index
       const idx = JSON.parse(await env.LM_KV.get('users') || '[]');
       if (!idx.includes(userId)) { idx.push(userId); await env.LM_KV.put('users', JSON.stringify(idx)); }
+      return json({ ok: true });
+    }
+
+    // ── POST /push/schedule — save Lumi reminder schedule ──
+    if (url.pathname === '/push/schedule' && request.method === 'POST') {
+      const { userId, schedule, tzOffset } = await request.json();
+      if (!userId) return json({ error: 'missing userId' }, 400);
+      const existing = JSON.parse(await env.LM_KV.get('user:' + userId) || '{}');
+      existing.schedule = schedule;
+      if (tzOffset !== undefined) existing.tzOffset = tzOffset;
+      await env.LM_KV.put('user:' + userId, JSON.stringify(existing));
       return json({ ok: true });
     }
 
@@ -236,9 +282,31 @@ export default {
       if (!message) return json({ error: 'missing message' }, 400);
       // Guard the AI binding so a missing binding never throws a 1101 (which breaks CORS).
       if (!env.AI) return json({ reply: null, error: 'AI binding not configured' });
-      const system = `You are ${character}, a warm and practical life coach inside the Life Manual app. The user's name is ${name}. Keep replies to 2–4 sentences. Use 1 relevant emoji at the end. Be encouraging and specific. No filler phrases like "Great question!" — just answer directly and helpfully.`;
+      const CHAR_PERSONAS = {
+        'Barney': 'You are Barney the bear — a warm, big-hearted buddy who keeps it real. You give honest, grounded advice like a best friend who genuinely cares.',
+        'Penny': 'You are Penny the bunny — cheerful and upbeat, always finding the bright side. You give quick, energetic advice that makes people feel like they can do anything.',
+        'Ellie': 'You are Ellie the elephant — wise and thoughtful, with a long memory. You connect today\'s small actions to big life patterns.',
+        'Benny': 'You are Benny the beaver — sharp and practical about money and productivity. You cut through excuses and give specific, actionable steps.',
+        'Panda': 'You are Panda — calm and mindful. You help people slow down, breathe, and see clearly. Your advice feels like a peaceful reset.',
+        'Max': 'You are Max the wolf — direct and energetic about health and fitness. You push people just enough without being harsh.',
+        'Capy': 'You are Capy the capybara — the chillest guide around. You help people stop overthinking and just go with the flow.',
+        'Luna': 'You are Luna the cat — focused and a little mysterious. You help people cut distractions and find deep concentration.',
+        'Pip': 'You are Pip the penguin — organized and precise. You help people build systems, routines, and structure.',
+        'Oliver': 'You are Oliver the owl — knowledgeable and curious. You make learning feel exciting and connect ideas in surprising ways.',
+        'Anty': 'You are Anty the ant — disciplined and hardworking. You believe in showing up every single day, no matter what.',
+        'Dolph': 'You are Dolph the dolphin — playful and socially smart. You help people with communication, relationships, and connecting with others.',
+        'Leo': 'You are Leo the lion — confident and commanding. You help people own their power, speak up, and lead with courage.',
+        'Finn': 'You are Finn the fox — clever and creative. You find unexpected solutions and think outside the box.',
+        'Daisy': 'You are Daisy the deer — gentle and grounded. You help people reconnect with what matters and move at a sustainable pace.',
+        'Shelly': 'You are Shelly the turtle — patient and long-term focused. You remind people that slow and steady wins, and small steps compound.',
+        'Eddie': 'You are Eddie the eagle — visionary and ambitious. You help people zoom out, see the big picture, and aim higher in their career and goals.',
+        'Kai': 'You are Kai the tiger — intense and powerful. You help people tap into their inner drive and push past their limits.',
+        'Rocky': 'You are Rocky the raccoon — adaptable and resourceful. You help people improvise, learn new skills fast, and thrive in any situation.',
+      };
+      const persona = CHAR_PERSONAS[character] || `You are ${character}, a warm and practical life coach inside the Life Manual app.`;
+      const system = `${persona} The user's name is ${name}. Keep replies to 2–4 sentences. Use 1 relevant emoji at the end. Be encouraging and specific. No filler phrases like "Great question!" — just answer directly and helpfully.`;
       try {
-        const aiRes = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        const aiRes = await env.AI.run('@cf/meta/llama-3.2-3b-instruct', {
           messages: [{ role:'system', content:system }, { role:'user', content:message }],
           max_tokens: 256,
         });
@@ -282,6 +350,9 @@ export default {
     }
 
     return new Response('Not found', { status: 404, headers: CORS });
+    } catch(e) {
+      return json({ error: String(e && e.message || e) }, 500);
+    }
   },
 
   async scheduled(event, env) {

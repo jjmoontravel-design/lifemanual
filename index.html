@@ -1484,6 +1484,13 @@ async function syncEventsToWorker(){
   fetch(AI_WORKER_URL+"/push/events",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({userId:getPushUserId(),events:state.events,tzOffset:new Date().getTimezoneOffset()})}).catch(()=>{});
 }
+async function syncScheduleToWorker(){
+  const sub=await getPushSubscription();
+  if(!sub)return;
+  const cfg=getLumiCfg();
+  fetch(AI_WORKER_URL+"/push/schedule",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({userId:getPushUserId(),schedule:cfg,tzOffset:new Date().getTimezoneOffset()})}).catch(()=>{});
+}
 
 const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet",themes:"lifemanual.themes",manualMood:"lifemanual.manualMood",manualMoodT:"lifemanual.manualMoodT"};
 const THEME_PRICES={dark:0,light:0,kawaii:100,ocean:100,forest:100,galaxy:100};
@@ -1808,8 +1815,6 @@ function markGot(slot){
     toast("🪙 +2 coins — "+(activeSlots().length-gotCount())+" to go");
     celebrate(12,30);          // each task: bubbles drifting + a few pops
     setMood("happy",1300);     // a happy bounce for each finished task
-    // Offer notifications after first lesson tap
-    if(gotCount()===1)setTimeout(showNotifBanner,1500);
   }
   saveAll();
   if(rect){showMiniLumi(rect,complete);themeParticles(rect);showCoinEarn(rect);}
@@ -2206,7 +2211,7 @@ function renderToday(v){
   cards.challenge=moduleBubble("challenge",`<div class="title">${d.challenge.c}</div><div class="hint">${d.challenge.y}</div>`);
   feedOrder().forEach(slot=>{if(cards[slot])html+=cards[slot];});
   if(done)html+=`<div class="msg guide"><div class="msg-face">${gFace}</div>
-    <div class="bubble guide celebrate"><div class="title">🎉 All ${activeSlots().length} done!</div>🪙 ${activeSlots().length*2} coins earned today.${state.streak.n===7?" 🔓 5 cards unlocked starting tomorrow!":state.streak.n===14?" 🔓 All 7 cards unlocked starting tomorrow!":""} A fresh upload lands at midnight. See you tomorrow ✨</div></div>`;
+    <div class="bubble guide celebrate"><div class="title">🎉 All ${activeSlots().length} done!</div>🪙 ${activeSlots().length*2} coins earned today.${state.streak.n===7?" 🔓 5 cards unlocked starting tomorrow!":state.streak.n===14?" 🔓 All 7 cards unlocked starting tomorrow!":""} A fresh upload lands at midnight. See you tomorrow ✨<div class="hint" style="margin-top:8px">📅 Set a reminder in the <b>Schedule</b> tab so I know when you're back.</div></div></div>`;
   // Locked card previews for free users (streak < 7 shows 3 cards; tease the rest)
   const LOCKED_PREVIEWS=[
     {icon:"💰",title:"Money & Finance",sub:"Saving, budgeting, and building wealth"},
@@ -3365,7 +3370,11 @@ function renderSchedule(v){
   $("#schLumiOn").onchange=e=>{
     const cfg=getLumiCfg(); cfg.on=e.target.checked;
     if(cfg.on&&"Notification"in window&&Notification.permission==="default")
-      Notification.requestPermission().then(p=>toast(p==="granted"?"🔔 Notifications on!":"💜 Lumi will remind you inside the app."));
+      Notification.requestPermission().then(async p=>{
+        if(p==="granted"){toast("🔔 Notifications on — I'll ping you even when your screen is off!");await subscribePush();syncScheduleToWorker();}
+        else toast("💜 Lumi will remind you inside the app.");
+      });
+    else if(cfg.on&&Notification.permission==="granted"){subscribePush();syncScheduleToWorker();}
     saveLumiCfg(cfg); scheduleReminders(); renderSchedule(v);
   };
   const daysWrap=$("#schDays");
@@ -3379,7 +3388,7 @@ function renderSchedule(v){
     cfg.evening=$("#schEvening").value||"20:00";
     cfg.days=[...document.querySelectorAll("#schDays .dow-pill.on")].map(b=>+b.dataset.day);
     if(!cfg.days.length){toast("Pick at least one day for Lumi.");return;}
-    saveLumiCfg(cfg); scheduleReminders(); toast("✓ Schedule saved! Lumi's on it. 💜");
+    saveLumiCfg(cfg); scheduleReminders(); syncScheduleToWorker(); toast("✓ Schedule saved! Lumi's on it. 💜");
   };
   if($("#schPreview"))$("#schPreview").onclick=()=>{
     const h=new Date().getHours();
