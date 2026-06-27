@@ -1,13 +1,27 @@
 {
+  "id": "/lifemanual/",
   "name": "Life Manual",
   "short_name": "Life Manual",
-  "description": "Your daily life upgrade — a fresh knowledge pack every day, plus life skills from age 1 to 80.",
-  "start_url": ".",
+  "description": "Your daily life upgrade — one skill, one word, one money tip, one challenge every day. Pick an animal companion who walks with you.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0a0e1a",
   "theme_color": "#0a0e1a",
+  "categories": ["education", "lifestyle", "productivity"],
+  "lang": "en",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Life Manual home screen"
+    }
   ]
 }
