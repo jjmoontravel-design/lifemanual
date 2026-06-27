@@ -2457,8 +2457,8 @@ async function stripeCheckout(priceId, mode, successParam){
       body:JSON.stringify({priceId,mode,successUrl:APP_URL+"?paid="+successParam,cancelUrl:APP_URL})});
     const d=await res.json();
     if(d.url){window.location.href=d.url;}
-    else toast("Checkout error — try again.");
-  }catch(e){toast("Checkout error — try again.");}
+    else toast("Checkout error: "+(d.error||"unknown error"));
+  }catch(e){toast("Checkout error: "+String(e&&e.message||e));}
 }
 function unlockAllThemes(){
   stripeCheckout(PRICE_THEMES,"payment","themes");
