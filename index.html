@@ -1463,7 +1463,7 @@ async function syncEventsToWorker(){
 }
 
 const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet",themes:"lifemanual.themes",manualMood:"lifemanual.manualMood",manualMoodT:"lifemanual.manualMoodT"};
-const THEME_PRICES={dark:0,light:0,kawaii:0,ocean:0,forest:0,galaxy:0};
+const THEME_PRICES={dark:0,light:0,kawaii:100,ocean:100,forest:100,galaxy:100};
 // Coin cost to unlock each guide. Barney (bear) is free — everyone starts with him.
 const CHAR_COST={bear:0, beaver:150, wolf:150, lion:150, elephant:150, panda:100, capybara:100, cat:100, bunny:100, dolphin:100, fox:100, eagle:100, tiger:100, raccoon:100, penguin:75, owl:75, ant:75, deer:75, turtle:75};
 function charCost(id){return CHAR_COST[id]==null?100:CHAR_COST[id];}
@@ -2388,6 +2388,10 @@ function renderProgress(v){
     <div class="section-note" style="text-align:center">Complete all 7 daily modules to grow your streak. Skills from any age count — it's never too late.</div>`;
 }
 
+function unlockAllThemes(){
+  // Stripe payment not yet wired — placeholder
+  toast("💳 One-time purchase coming soon! Earn coins in the meantime 🪙");
+}
 function getTheme(){const t=localStorage.getItem(K.theme)||"dark";return t;}
 function applyTheme(t){
   document.documentElement.classList.remove("light","kawaii","ocean","forest","galaxy");
@@ -2431,7 +2435,10 @@ function renderMore(v){
     <div class="band-head"><h2>⚙️ Settings & tools</h2></div>
     <button class="more-btn" id="changeAge">🎂 Change my age <span style="color:var(--muted)">(currently ${state.age??"not set"})</span></button>
     <div class="band-head" style="margin-top:4px"><h2>🎨 Theme</h2></div>
-    <div class="theme-scroll">${["dark","light","kawaii","ocean","forest","galaxy"].map(t=>{const owned=(state.unlockedThemes||["dark","light"]).includes(t);const price=THEME_PRICES[t]||50;return`<div class="theme-card${t===getTheme()?" sel":""}" data-theme="${t}" onclick="pickTheme('${t}')"><div class="theme-swatch theme-sw-${t}"></div>${{"dark":"🌙 Dark","light":"☀️ Bright","kawaii":"🌸 Kawaii","ocean":"🌊 Ocean","forest":"🌲 Forest","galaxy":"🌌 Galaxy"}[t]}${!owned?`<div style="font-size:.68rem;color:#fbbf24;font-weight:800;margin-top:3px">🔒 ${price}🪙</div>`:""}</div>`;}).join("")}</div>
+    <div style="font-size:.8rem;color:var(--muted);padding:0 2px 10px">You have <b style="color:#fbbf24">🪙 ${state.coins} coins</b> · earn 2 per daily card · premium themes cost 100 coins each</div>
+    <div class="theme-scroll">${["dark","light","kawaii","ocean","forest","galaxy"].map(t=>{const owned=(state.unlockedThemes||["dark","light"]).includes(t);const price=THEME_PRICES[t]||100;return`<div class="theme-card${t===getTheme()?" sel":""}" data-theme="${t}" onclick="pickTheme('${t}')"><div class="theme-swatch theme-sw-${t}"></div>${{"dark":"🌙 Dark","light":"☀️ Bright","kawaii":"🌸 Kawaii","ocean":"🌊 Ocean","forest":"🌲 Forest","galaxy":"🌌 Galaxy"}[t]}${owned&&THEME_PRICES[t]?`<div style="font-size:.68rem;color:#34d399;font-weight:800;margin-top:3px">✓ Owned</div>`:!owned?`<div style="font-size:.68rem;color:#fbbf24;font-weight:800;margin-top:3px">🔒 ${price}🪙</div>`:""}</div>`;}).join("")}</div>
+    <button class="more-btn" onclick="unlockAllThemes()" style="margin-top:6px;background:linear-gradient(120deg,#6366f1,#22d3ee);color:#fff;border:none;font-weight:800">🎨 Unlock all themes — $1.99 one-time</button>
+    <div style="font-size:.74rem;color:var(--muted);padding:4px 2px 6px">One-time purchase · yours forever · all 4 premium themes</div>
     <button class="more-btn" id="fontBtn">🔠 Text size: <b>${({"":"Normal","fs-lg":"Large","fs-xl":"Extra large"})[localStorage.getItem(K.fs)||""]}</b> — tap to change</button>
     <div class="band-head" style="margin-top:18px"><h2>🔔 Lumi Reminders</h2></div>
     <div class="card">
@@ -3450,7 +3457,10 @@ function renderYou(v){
     <button class="more-btn" id="changeInterests">✨ My interests <span style="color:var(--muted);font-weight:400">${(state.interests&&state.interests.length)?"("+state.interests.map(id=>{const it=INTERESTS.find(x=>x.id===id);return it?it.label:id;}).join(", ")+")":"· tap to set"}</span></button>
     <button class="more-btn" id="changeAge">🎂 My age <span style="color:var(--muted);font-weight:400">(${state.age??"not set"})</span></button>
     <div class="band-head" style="margin-top:4px"><h2>🎨 Theme</h2></div>
-    <div class="theme-scroll">${["dark","light","kawaii","ocean","forest","galaxy"].map(t=>{const owned=(state.unlockedThemes||["dark","light"]).includes(t);const price=THEME_PRICES[t]||50;return`<div class="theme-card${t===getTheme()?" sel":""}" data-theme="${t}" onclick="pickTheme('${t}')"><div class="theme-swatch theme-sw-${t}"></div>${{"dark":"🌙 Dark","light":"☀️ Bright","kawaii":"🌸 Kawaii","ocean":"🌊 Ocean","forest":"🌲 Forest","galaxy":"🌌 Galaxy"}[t]}${!owned?`<div style="font-size:.68rem;color:#fbbf24;font-weight:800;margin-top:3px">🔒 ${price}🪙</div>`:""}</div>`;}).join("")}</div>
+    <div style="font-size:.8rem;color:var(--muted);padding:0 2px 10px">You have <b style="color:#fbbf24">🪙 ${state.coins} coins</b> · earn 2 per daily card · premium themes cost 100 coins each</div>
+    <div class="theme-scroll">${["dark","light","kawaii","ocean","forest","galaxy"].map(t=>{const owned=(state.unlockedThemes||["dark","light"]).includes(t);const price=THEME_PRICES[t]||100;return`<div class="theme-card${t===getTheme()?" sel":""}" data-theme="${t}" onclick="pickTheme('${t}')"><div class="theme-swatch theme-sw-${t}"></div>${{"dark":"🌙 Dark","light":"☀️ Bright","kawaii":"🌸 Kawaii","ocean":"🌊 Ocean","forest":"🌲 Forest","galaxy":"🌌 Galaxy"}[t]}${owned&&THEME_PRICES[t]?`<div style="font-size:.68rem;color:#34d399;font-weight:800;margin-top:3px">✓ Owned</div>`:!owned?`<div style="font-size:.68rem;color:#fbbf24;font-weight:800;margin-top:3px">🔒 ${price}🪙</div>`:""}</div>`;}).join("")}</div>
+    <button class="more-btn" onclick="unlockAllThemes()" style="margin-top:6px;background:linear-gradient(120deg,#6366f1,#22d3ee);color:#fff;border:none;font-weight:800">🎨 Unlock all themes — $1.99 one-time</button>
+    <div style="font-size:.74rem;color:var(--muted);padding:4px 2px 6px">One-time purchase · yours forever · all 4 premium themes</div>
     <button class="more-btn" id="fontBtn">🔠 Text size: <b>${({"":"Normal","fs-lg":"Large","fs-xl":"Extra large"})[localStorage.getItem(K.fs)||""]}</b></button>
 
     <button class="more-btn" id="goSchedule">🔔 Lumi reminders & schedule <span style="color:var(--muted);font-weight:400">${lcfg.on?"· on":"· off"} →</span></button>
