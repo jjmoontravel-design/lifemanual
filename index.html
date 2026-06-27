@@ -3211,7 +3211,9 @@ function playChime(){
 }
 
 // Track which alarms have already popped up this session so we don't double-fire
-const _shownAlarms=new Set();
+// Persisted alarm log — keyed by "evId-warn-YYYY-MM-DD" so repeating events reset daily but survive page reload
+function _alarmShown(key){return !!localStorage.getItem("lm.alarm."+key);}
+function _markAlarm(key){localStorage.setItem("lm.alarm."+key,"1");}
 
 function _checkEventsDue(){
   const now=Date.now(), today=todayKey(), dow=new Date(now).getDay();
@@ -3225,15 +3227,11 @@ function _checkEventsDue(){
     const[h,m]=ev.time.split(":").map(Number);
     const d=new Date(now); const evMs=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,m,0).getTime();
     const warnMs=evMs-5*60*1000;
-    // Show popup if within a 90-second window of either fire time and not yet shown
-    const warnKey=ev.id+"-warn", nowKey=ev.id+"-now";
-    if(!_shownAlarms.has(warnKey)&&now>=warnMs-45000&&now<=warnMs+90000){
-      _shownAlarms.add(warnKey); showAlarmPopup(ev.emoji,ev.title,"starts in 5 minutes!");
-    } else if(!_shownAlarms.has(nowKey)&&now>=evMs-45000&&now<=evMs+600000){
-      // Up to 10 minutes late — still show the popup
-      const minsLate=Math.max(0,Math.round((now-evMs)/60000));
-      const msg=minsLate<=1?"is starting now!":"started "+minsLate+" minutes ago!";
-      _shownAlarms.add(nowKey); showAlarmPopup(ev.emoji,ev.title,msg);
+    const warnKey=ev.id+"-warn-"+today, nowKey=ev.id+"-now-"+today;
+    if(!_alarmShown(warnKey)&&now>=warnMs-45000&&now<=warnMs+90000){
+      _markAlarm(warnKey); showAlarmPopup(ev.emoji,ev.title,"starts in 5 minutes!");
+    } else if(!_alarmShown(nowKey)&&now>=evMs-45000&&now<=evMs+90000){
+      _markAlarm(nowKey); showAlarmPopup(ev.emoji,ev.title,"is starting now!");
     }
   });
 }
