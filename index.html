@@ -1496,7 +1496,7 @@ async function syncScheduleToWorker(){
     body:JSON.stringify({userId:getPushUserId(),schedule:cfg,tzOffset:new Date().getTimezoneOffset()})}).catch(()=>{});
 }
 
-const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet",themes:"lifemanual.themes",manualMood:"lifemanual.manualMood",manualMoodT:"lifemanual.manualMoodT"};
+const K={age:"lifemanual.age",done:"lifemanual.done",daily:"lifemanual.daily",streak:"lifemanual.streak",xp:"lifemanual.xp",theme:"lifemanual.theme",fs:"lifemanual.fontsize",history:"lifemanual.history",name:"lifemanual.name",goal:"lifemanual.goal",events:"lifemanual.events",character:"lifemanual.character",interests:"lifemanual.interests",lifeStage:"lifemanual.lifestage",coins:"lifemanual.coins",unlocked:"lifemanual.unlocked",gender:"lifemanual.gender",pet:"lifemanual.pet",themes:"lifemanual.themes",manualMood:"lifemanual.manualMood",manualMoodT:"lifemanual.manualMoodT",premium:"lifemanual.premium"};
 const THEME_PRICES={dark:0,light:0,kawaii:100,ocean:100,forest:100,galaxy:100};
 // Coin cost to unlock each guide. Barney (bear) is free — everyone starts with him.
 const CHAR_COST={bear:0, beaver:150, wolf:150, lion:150, elephant:150, panda:100, capybara:100, cat:100, bunny:100, dolphin:100, fox:100, eagle:100, tiger:100, raccoon:100, penguin:75, owl:75, ant:75, deer:75, turtle:75};
@@ -1510,6 +1510,7 @@ let state={
   streak:JSON.parse(localStorage.getItem(K.streak)||'{"n":0,"last":null}'),
   xp:parseInt(localStorage.getItem(K.xp))||0,
   coins:parseInt(localStorage.getItem(K.coins))||0,
+  isPremium:localStorage.getItem(K.premium)==="1",
   unlocked:JSON.parse(localStorage.getItem(K.unlocked)||'["bear"]'),
   unlockedThemes:["dark","light","kawaii","ocean","forest","galaxy"],
   history:JSON.parse(localStorage.getItem(K.history)||"{}"),
@@ -1526,7 +1527,9 @@ let state={
 };
 BANDS.forEach(b=>b.skills.forEach((s,i)=>s.id=b.id+"-"+i));
 const SLOTS=["skill","vocab","body","money","mind","world","challenge"];
+function isPremium(){return !!(state.isPremium);}
 function activeSlots(){
+  if(isPremium())return SLOTS;
   const n=state.streak?.n||0;
   if(n>=14)return SLOTS;
   if(n>=7)return["skill","vocab","body","money","challenge"];
@@ -1732,6 +1735,7 @@ function saveAll(){
   if(state.pet)localStorage.setItem(K.pet,JSON.stringify(state.pet));
   localStorage.setItem(K.history,JSON.stringify(state.history));
   localStorage.setItem(K.events,JSON.stringify(state.events));
+  if(state.isPremium)localStorage.setItem(K.premium,"1");
   if(state.character)localStorage.setItem(K.character,state.character);
   if(state.manualMood)localStorage.setItem(K.manualMood,state.manualMood);
   else localStorage.removeItem(K.manualMood);
@@ -2086,12 +2090,14 @@ function bumpChatCount(){const k="lm.chat."+todayKey();localStorage.setItem(k,ge
 async function sendChat(){
   const box=document.getElementById("chatBox"); if(!box)return;
   const t=box.value.trim(); if(!t)return;
-  const used=getChatCount();
-  if(used>=FREE_CHAT_LIMIT){
-    toast("You've used all "+FREE_CHAT_LIMIT+" free chats today — come back tomorrow! 💜");
-    return;
+  if(!isPremium()){
+    const used=getChatCount();
+    if(used>=FREE_CHAT_LIMIT){
+      toast("You've used all "+FREE_CHAT_LIMIT+" free chats today 💜 Go Premium for unlimited!");
+      return;
+    }
+    bumpChatCount();
   }
-  bumpChatCount();
   const thread=document.getElementById("coThread"); if(!thread)return;
   const c=getChar(), nm=state.name||"friend";
   box.value="";
@@ -2233,7 +2239,7 @@ function renderToday(v){
     {icon:"🧠",title:"Mind & Calm",sub:"Mental strength and emotional skills"},
     {icon:"🌍",title:"World & Culture",sub:"Vocabulary, news, and big ideas"}
   ];
-  if((state.streak?.n||0)<7){
+  if(!isPremium()&&(state.streak?.n||0)<7){
     html+=`<div style="margin:10px 0 4px 38px;font-size:.74rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;font-weight:700">🔒 More cards — keep your streak going</div>`;
     LOCKED_PREVIEWS.forEach(p=>{
       html+=`<div class="locked-preview" onclick="showUpgrade()">
