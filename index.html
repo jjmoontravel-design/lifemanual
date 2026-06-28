@@ -3977,9 +3977,22 @@ function showKnockPopup(){
   if(!vid||!popup)return;
   const src=`${c.id}-knock.mp4`;
   popup.style.background=c.accent||c.color||"#1a0a2e";
-  vid.src=src;
-  vid.load();
-  vid.play().catch(()=>{});
+  // Wait for the video to buffer before playing — avoids silent rejection when
+  // the app wakes from background. Try with sound, fall back to muted (iOS blocks
+  // autoplay-with-sound outside a tap, but allows muted inline playback).
+  const doPlay=()=>{
+    vid.currentTime=0;
+    vid.muted=false;
+    vid.play().catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
+  };
+  if(vid.dataset.src!==src){
+    vid.src=src;
+    vid.dataset.src=src;
+    vid.load();
+    vid.addEventListener("canplay",doPlay,{once:true});
+  }else{
+    doPlay();
+  }
   document.getElementById("knock-name").textContent=c.name+" is knocking…";
   document.getElementById("knock-text").textContent=c.hello||"Your daily lesson is ready!";
   popup.classList.remove("hidden");
