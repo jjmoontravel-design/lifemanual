@@ -1427,7 +1427,7 @@ let state={
   coins:parseInt(localStorage.getItem(K.coins))||0,
   isPremium:localStorage.getItem(K.premium)==="1",
   unlocked:JSON.parse(localStorage.getItem(K.unlocked)||'["bear"]'),
-  unlockedThemes:["dark","light","kawaii","ocean","forest","galaxy"],
+  unlockedThemes:JSON.parse(localStorage.getItem(K.themes)||'["dark","light"]'),
   history:JSON.parse(localStorage.getItem(K.history)||"{}"),
   events:JSON.parse(localStorage.getItem("lifemanual.events")||"[]"),
   character:localStorage.getItem("lifemanual.character")||"",
